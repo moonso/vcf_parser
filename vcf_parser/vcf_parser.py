@@ -257,19 +257,24 @@ class VCFParser(object):
     def __next__(self):
         
         variant = dict(zip(self.header, self.next_line.split('\t')))
-        for info in variant.get('INFO', '').split(';'):
-            info_dict = OrderedDict()
-            info = info.split('=')
-            if len(info) == 1:
-                info_dict[info[0]] = ''
-            else:
-                info_dict[info[0]] = info[1]
-                
         self.next_line = self.vcf.readline().rstrip()
+        
         if len(variant) < 8:
             raise StopIteration
         else:
+            for info in variant.get('INFO', '').split(';'):
+                info_dict = {}
+                info = info.split('=')
+                if len(info) == 1:
+                    info_dict[info[0]] = ''
+                else:
+                    info_dict[info[0]] = info[1]
+            
+            variant['info_dict'] = info_dict
+            variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
+            
             return variant
+        
     
     def __str__(self):
         """return the headers header lines to screen."""
