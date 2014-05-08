@@ -4,15 +4,12 @@ except ImportError:
     from distutils.core import setup
     
 # For making things look nice on pypi:
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-except (IOError, ImportError):
-    long_description = 'Tool for parsing Variant Call Format (VCF) files.'
+# try:
+#     import pypandoc
+#     long_description = pypandoc.convert('README.md', 'rst')
+# except (IOError, ImportError):
 
-
-# with open('README.txt') as file:
-#     long_description = file.read()
+long_description = 'Tool for parsing Variant Call Format (VCF) files.'
 
 setup(name='vcf_parser',
     version='0.1',
