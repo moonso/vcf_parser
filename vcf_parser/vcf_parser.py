@@ -79,6 +79,13 @@ from pprint import pprint as pp
 ### TODO make a proper vcf parser ###
 
 
+vep_columns =['Allele', 'Gene' , 'Feature', 'Feature_type', 'Consequence', 
+            'cDNA_position', 'CDS_position', 'Protein_position', 'Amino_acids', 
+            'Codons', 'Existing_variation', 'EXON', 'INTRON', 'DISTANCE', 
+            'STRAND', 'SYMBOL', 'SYMBOL_SOURCE', 'SIFT', 'PolyPhen', 'HGVSc', 'HGVSp'
+            ]
+
+
 class HeaderParser(object):
     """Parses a file with family info and creates a family object with individuals."""
     def __init__(self):
@@ -262,17 +269,19 @@ class VCFParser(object):
         if len(variant) < 8:
             raise StopIteration
         else:
+            info_dict = {}
+            vep_dict = {}
             for info in variant.get('INFO', '').split(';'):
-                info_dict = {}
                 info = info.split('=')
-                if len(info) == 1:
-                    info_dict[info[0]] = ''
-                else:
-                    info_dict[info[0]] = info[1]
+                if info[0] == 'CSQ':
+                    for annotation in info[1].split(','):
+                        vep_info = dict(zip(vep_columns,annotation.split('|')))
+                        vep_dict[vep_info['SYMBOL']] = vep_info
+                        
             
             variant['info_dict'] = info_dict
             variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
-            
+            variant['vep_info'] = vep_dict
             return variant
         
     
@@ -294,8 +303,9 @@ def main():
     # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
     # print(my_parser)
     nr_of_variants = 0
-    for line in my_parser:
-        print(line)
+    for variant in my_parser:
+        pp(variant)
+        print('')
         nr_of_variants += 1
     print(nr_of_variants)
     # print my_parser.__dict__
