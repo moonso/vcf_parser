@@ -271,14 +271,23 @@ class VCFParser(object):
         else:
             info_dict = {}
             vep_dict = {}
+            ind_dict = {}
             for info in variant.get('INFO', '').split(';'):
                 info = info.split('=')
                 if info[0] == 'CSQ':
                     for annotation in info[1].split(','):
                         vep_info = dict(zip(vep_columns,annotation.split('|')))
                         vep_dict[vep_info['SYMBOL']] = vep_info
-                        
+                elif len(info) > 1:
+                    info_dict[info[0]] = info[1]
+                else:
+                    info_dict[info[0]] = True
+                    
+            gt_format = variant.get('FORMAT', '').split(':')
+            for individual in self.individuals:
+                ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
+            variant['ind_dict'] = ind_dict            
             variant['info_dict'] = info_dict
             variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
             variant['vep_info'] = vep_dict
