@@ -261,6 +261,10 @@ class VCFParser(object):
     def __iter__(self):
         return self
     
+    def next(self):
+        """Works for python 2.x"""
+        return self.__next__()
+    
     def __next__(self):
         
         variant = dict(zip(self.header, self.next_line.split('\t')))
@@ -312,7 +316,7 @@ def main():
     # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
     # print(my_parser)
     nr_of_variants = 0
-    for variant in my_parser:
+    for variant in my_parser.next():
         pp(variant)
         print('')
         nr_of_variants += 1
