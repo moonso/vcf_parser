@@ -64,6 +64,8 @@ Created by Måns Magnusson on 2013-01-17.
 Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import gzip
@@ -261,6 +263,10 @@ class VCFParser(object):
     def __iter__(self):
         return self
     
+    def next(self):
+        """Works for python 2.x"""
+        return self.__next__()
+    
     def __next__(self):
         
         variant = dict(zip(self.header, self.next_line.split('\t')))
@@ -271,14 +277,23 @@ class VCFParser(object):
         else:
             info_dict = {}
             vep_dict = {}
+            ind_dict = {}
             for info in variant.get('INFO', '').split(';'):
                 info = info.split('=')
                 if info[0] == 'CSQ':
                     for annotation in info[1].split(','):
                         vep_info = dict(zip(vep_columns,annotation.split('|')))
                         vep_dict[vep_info['SYMBOL']] = vep_info
-                        
+                elif len(info) > 1:
+                    info_dict[info[0]] = info[1]
+                else:
+                    info_dict[info[0]] = True
+                    
+            gt_format = variant.get('FORMAT', '').split(':')
+            for individual in self.individuals:
+                ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
+            variant['ind_dict'] = ind_dict            
             variant['info_dict'] = info_dict
             variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
             variant['vep_info'] = vep_dict
@@ -307,7 +322,7 @@ def main():
         pp(variant)
         print('')
         nr_of_variants += 1
-    print(nr_of_variants)
+    print('Number of variants: %s' % nr_of_variants)
     # print my_parser.__dict__
     # for line in my_parser.metadata:
     #     print line, my_parser.metadata[line]
