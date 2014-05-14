@@ -64,6 +64,8 @@ Created by Måns Magnusson on 2013-01-17.
 Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import gzip
@@ -316,11 +318,11 @@ def main():
     # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
     # print(my_parser)
     nr_of_variants = 0
-    for variant in my_parser.next():
+    for variant in my_parser:
         pp(variant)
         print('')
         nr_of_variants += 1
-    print(nr_of_variants)
+    print('Number of variants: %s' % nr_of_variants)
     # print my_parser.__dict__
     # for line in my_parser.metadata:
     #     print line, my_parser.metadata[line]
