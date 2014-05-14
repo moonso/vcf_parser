@@ -15,6 +15,13 @@ The genotype information is parsed into a dictionary
 
     variant['ind_dict']
 
+and looks like:
+
+    'ind_dict': {'father': {'GQ': '60', 'GT': '0/0'},
+                  'mother': {'GQ': '60', 'GT': '0/0'},
+                  'proband': {'GQ': '60', 'GT': '0/1'}}
+
+
 Vep information, if present is parsed into
 
     variant['vep_dict']
@@ -64,13 +71,28 @@ and looks like:
                              'SYMBOL_SOURCE': '',
                              'cDNA_position': ''}}
 
-Individual genotypes are parsed into 
+INFO field is parsed into 
 
-    variant['vep_dict']    
+    variant['info_dict]
 
-and looks like:
+and looks like
 
-    'ind_dict': {'father': {'GQ': '60', 'GT': '0/0'},
-                  'mother': {'GQ': '60', 'GT': '0/0'},
-                  'proband': {'GQ': '60', 'GT': '0/1'}}
+    'info_dict': {'AC': '1',
+                   'AF': '0.167',
+                   'AN': '6',
+                   'BaseQRankSum': '2.286',
+                   'DB': True,
+                   'DP': '1306',
+                   'FS': '1.539',
+                   'InbreedingCoeff': '0.1379',
+                   'MQ': '39.83',
+                   'MQ0': '0',
+                   'MQRankSum': '-2.146',
+                   'POSITIVE_TRAIN_SITE': True,
+                   'QD': '29.57',
+                   'ReadPosRankSum': '0.897',
+                   'VQSLOD': '4.52',
+                   'culprit': 'FS',
+                   'set': 'variant'}
+
 
