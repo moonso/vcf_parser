@@ -1,16 +1,16 @@
 #VCF Parser#
-Small library for parsing vcf files. Based on [PyVCF](https://github.com/jdoughertyii/PyVCF)
+Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamescasbon/PyVCF)
 
     pip install vcf_parser
 
 ```python3
     from vcf_parser import vcf_parser
-    my_parser = vcf_parser('infile.vcf')
+    my_parser = vcf_parser.VCFParser('infile.vcf')
     for variant in my_parser:
         print(variant)
 ```
 
-Returns dictionary with the vcf info.
+Returns dictionary with the vcf info for each variant.
 The genotype information is parsed into a dictionary
 
     variant['ind_dict']
