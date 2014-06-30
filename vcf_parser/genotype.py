@@ -90,7 +90,7 @@ class Genotype(object):
             self.genotype_quality = float(GQ)
         except ValueError:
             pass
-        self.phred_likelihoods = PL.split(',')
+        self.phred_likelihoods = []
         if PL:
             self.phred_likelihoods = [int(score) for score in PL.split(',')]
         

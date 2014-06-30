@@ -294,6 +294,7 @@ class VCFParser(object):
             gt_format = variant.get('FORMAT', '').split(':')
             for individual in self.individuals:
                 ind_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
+                # ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
             variant['ind_dict'] = ind_dict            
             variant['info_dict'] = info_dict
@@ -308,11 +309,13 @@ class VCFParser(object):
         
 
 def main():
+    from datetime import datetime
     parser = argparse.ArgumentParser(description="Parse vcf headers.")
     parser.add_argument('variant_file', type=str, nargs=1 , help='A file with variant information.')
     args = parser.parse_args()
     infile = args.variant_file[0]
     my_parser = VCFParser(infile)
+    start = datetime.now()
     # my_parser.parse()
     # print('parsing')
     # my_parser.metadataparser.add_info('ANN', '.', 'String', 'Annotates what feature(s) this variant belongs to.')
@@ -321,9 +324,10 @@ def main():
     # print(my_parser)
     nr_of_variants = 0
     for variant in my_parser:
-        print('\t'.join([variant[head] for head in my_parser.header]))
+        # print('\t'.join([variant[head] for head in my_parser.header]))
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
+    print('Time to parse: %s' % str(datetime.now()-start))
     # print my_parser.__dict__
     # for line in my_parser.metadata:
     #     print line, my_parser.metadata[line]
