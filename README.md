@@ -13,11 +13,11 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
 Returns dictionary with the vcf info for each variant.
 The genotype information is converted to a genotype object and stored in a dictionary
 
-    variant['ind_dict']
+    variant['genotypes']
 
 and looks like:
 
-    'ind_dict': {'father': genotype_object,
+    'genotypes': {'father': genotype_object,
                   'mother': genotype_object,
                   'proband': genotype_object}
 
