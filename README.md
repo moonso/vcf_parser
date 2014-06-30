@@ -11,16 +11,32 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
 ```
 
 Returns dictionary with the vcf info for each variant.
-The genotype information is parsed into a dictionary
+The genotype information is converted to a genotype object and stored in a dictionary
 
     variant['ind_dict']
 
 and looks like:
 
-    'ind_dict': {'father': {'GQ': '60', 'GT': '0/0'},
-                  'mother': {'GQ': '60', 'GT': '0/0'},
-                  'proband': {'GQ': '60', 'GT': '0/1'}}
+    'ind_dict': {'father': genotype_object,
+                  'mother': genotype_object,
+                  'proband': genotype_object}
 
+The genotype class have the following attributes for phrasing common questions:
+
+    - genotype STRING (Same as in VCF-standard)
+    - allele_1 STRING (Base on allele 1)
+    - allele_2 STRING (Base on allele 2)
+    - nocall BOOL
+    - heterozygote BOOL 
+    - homo_alt BOOL (If individual is homozygote alternative)
+    - homo_ref BOOL (If individual is homozygote reference)
+    - has_variant BOOL (If individual is called and not homozygote reference)
+    - ref_depth INT
+    - alt_depth INT
+    - phred_likelihoods LIST with FLOAT
+    - depth_of_coverage INT
+    - genotype_quality FLOAT
+    - phased BOOL
 
 Vep information, if present is parsed into
 
@@ -94,5 +110,4 @@ and looks like
                    'VQSLOD': '4.52',
                    'culprit': 'FS',
                    'set': 'variant'}
-
 
