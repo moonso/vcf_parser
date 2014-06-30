@@ -279,7 +279,7 @@ class VCFParser(object):
         else:
             info_dict = {}
             vep_dict = {}
-            ind_dict = {}
+            genotype_dict = {}
             for info in variant.get('INFO', '').split(';'):
                 info = info.split('=')
                 if info[0] == 'CSQ':
@@ -293,10 +293,10 @@ class VCFParser(object):
                     
             gt_format = variant.get('FORMAT', '').split(':')
             for individual in self.individuals:
-                ind_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
+                genotype_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
                 # ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
-            variant['ind_dict'] = ind_dict            
+            variant['genotypes'] = genotype_dict            
             variant['info_dict'] = info_dict
             variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
             variant['vep_info'] = vep_dict
