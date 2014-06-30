@@ -79,6 +79,7 @@ else:
 
 from pprint import pprint as pp
 
+from vcf_parser import genotype
 
 class HeaderParser(object):
     """Parses a file with family info and creates a family object with individuals."""
@@ -292,7 +293,7 @@ class VCFParser(object):
                     
             gt_format = variant.get('FORMAT', '').split(':')
             for individual in self.individuals:
-                ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
+                ind_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
             
             variant['ind_dict'] = ind_dict            
             variant['info_dict'] = info_dict
@@ -320,7 +321,7 @@ def main():
     # print(my_parser)
     nr_of_variants = 0
     for variant in my_parser:
-        pp(variant)
+        print('\t'.join([variant[head] for head in my_parser.header]))
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
     # print my_parser.__dict__
