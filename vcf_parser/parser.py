@@ -78,15 +78,8 @@ else:
     from collections import OrderedDict
 
 from pprint import pprint as pp
-### TODO make a proper vcf parser ###
 
-
-vep_columns =['Allele', 'Gene' , 'Feature', 'Feature_type', 'Consequence', 
-            'cDNA_position', 'CDS_position', 'Protein_position', 'Amino_acids', 
-            'Codons', 'Existing_variation', 'EXON', 'INTRON', 'DISTANCE', 
-            'STRAND', 'SYMBOL', 'SYMBOL_SOURCE', 'SIFT', 'PolyPhen', 'HGVSc', 'HGVSp'
-            ]
-
+from vcf_parser import genotype
 
 class HeaderParser(object):
     """Parses a file with family info and creates a family object with individuals."""
@@ -119,6 +112,7 @@ class HeaderParser(object):
         self.fileformat = ''
         self.line_counter = 0
         self.individuals = []
+        self.vep_columns = []
         self.info_pattern = re.compile(r'''\#\#INFO=<
             ID=(?P<id>[^,]+),
             Number=(?P<number>-?\d+|\.|[AG]),
@@ -160,7 +154,13 @@ class HeaderParser(object):
             if not match:
                 raise SyntaxError("One of the INFO lines is malformed: %s" % line)
             matches = [match.group('id'), match.group('number'), match.group('type'), match.group('desc')]
-            self.info_lines.append(dict(list(zip(self.header_keys['info'],matches))))
+            info_line = dict(list(zip(self.header_keys['info'],matches)))
+            if len(info_line['Description'].split('Format:')) > 1:
+                info_line['Format'] = [info.strip() for info in info_line['Description'].split('Format:')][-1]
+            self.info_lines.append(info_line)
+            # Store the vep columns:
+            if info_line['ID'] == 'CSQ':
+                self.vep_columns = info_line.get('Format', '').split('|')
             self.info_dict[match.group('id')] = line
         elif line_info[0] == 'FILTER':
             match = self.filter_pattern.match(line)
@@ -228,12 +228,14 @@ class HeaderParser(object):
         info_line = '##INFO=<ID='+info_id+',Number='+str(number)+',Type='+entry_type+',Description="'+description+'">'
         self.info_dict[info_id] = info_line
         return
-    
+
+
+####            Parser:         ####
 
 
 class VCFParser(object):
     """docstring for VCFParser"""
-    def __init__(self, infile):
+    def __init__(self, infile=None):
         super(VCFParser, self).__init__()
         self.infile = infile
         self.metadata = HeaderParser()
@@ -282,7 +284,7 @@ class VCFParser(object):
                 info = info.split('=')
                 if info[0] == 'CSQ':
                     for annotation in info[1].split(','):
-                        vep_info = dict(zip(vep_columns,annotation.split('|')))
+                        vep_info = dict(zip(self.metadata.vep_columns,annotation.split('|')))
                         vep_dict[vep_info['SYMBOL']] = vep_info
                 elif len(info) > 1:
                     info_dict[info[0]] = info[1]
@@ -291,7 +293,8 @@ class VCFParser(object):
                     
             gt_format = variant.get('FORMAT', '').split(':')
             for individual in self.individuals:
-                ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
+                ind_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
+                # ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
             variant['ind_dict'] = ind_dict            
             variant['info_dict'] = info_dict
@@ -306,11 +309,13 @@ class VCFParser(object):
         
 
 def main():
+    from datetime import datetime
     parser = argparse.ArgumentParser(description="Parse vcf headers.")
     parser.add_argument('variant_file', type=str, nargs=1 , help='A file with variant information.')
     args = parser.parse_args()
     infile = args.variant_file[0]
     my_parser = VCFParser(infile)
+    start = datetime.now()
     # my_parser.parse()
     # print('parsing')
     # my_parser.metadataparser.add_info('ANN', '.', 'String', 'Annotates what feature(s) this variant belongs to.')
@@ -319,10 +324,10 @@ def main():
     # print(my_parser)
     nr_of_variants = 0
     for variant in my_parser:
-        pp(variant)
-        print('')
+        # print('\t'.join([variant[head] for head in my_parser.header]))
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
+    print('Time to parse: %s' % str(datetime.now()-start))
     # print my_parser.__dict__
     # for line in my_parser.metadata:
     #     print line, my_parser.metadata[line]
