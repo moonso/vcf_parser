@@ -4,8 +4,8 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
     pip install vcf_parser
 
 ```python3
-    from vcf_parser import vcf_parser
-    my_parser = vcf_parser.VCFParser('infile.vcf')
+    from vcf_parser import parser
+    my_parser = parser.VCFParser('infile.vcf')
     for variant in my_parser:
         print(variant)
 ```
