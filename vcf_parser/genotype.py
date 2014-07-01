@@ -68,11 +68,16 @@ class Genotype(object):
         
         if self.genotype != './.':
             self.genotyped = True
-            self.check_alleles(self.allele_1, self.allele_2)
-            self.check_alleles(self.allele_2, self.allele_1)
-        if self.heterozygote or self.homo_alt:
-            self.has_variant = True
-        # Genotype call, ./., 1/1, 0/1, 0|1 ...
+            #Check allele status
+            if self.genotype == '0/0':
+                self.homo_ref = True
+            elif self.allele_1 == self.allele_2:
+                self.homo_alt = True
+                self.has_variant = True
+            else:
+                self.heterozygote = True
+                self.has_variant = True
+        
         self.ref_depth = AD[0]
         self.alt_depth = AD[-1]
         
@@ -94,25 +99,6 @@ class Genotype(object):
         if PL:
             self.phred_likelihoods = [int(score) for score in PL.split(',')]
         
-    
-    def check_alleles(self, variant1, variant2):
-        """Check if the genotype is heterozygote, homozygote etc..."""
-        if variant1 == '.' or variant2 == '.':# First is the case with './x' or 'x/.'
-        # This is the case of './0' or '0/.':
-            if variant1 == '0' or variant2 == '0':
-                self.homo_ref = True
-        # Now we have './1' or '1/.' => homo alt
-            else:
-                self.homo_alt = True
-        elif variant1 == variant2:
-            if variant1 == '0':
-                self.homo_ref = True
-            else:
-                self.homo_alt = True
-        else:
-            self.heterozygote = True
-        return
-    
     def __str__(self):
         """Specifies what will be printed when printing the object."""
         return self.allele_1+'/'+self.allele_2
