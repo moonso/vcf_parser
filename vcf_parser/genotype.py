@@ -45,9 +45,14 @@ import os
 
 class Genotype(object):
     """Holds information about a genotype"""
-    def __init__(self, GT='./.', AD='.,.', DP='0', GQ='0', PL=None):
+    def __init__(self, **kwargs):
         super(Genotype, self).__init__()        
         # These are the different genotypes:
+        GT = kwargs.get('GT', './.')
+        AD = kwargs.get('AD', '.,.')
+        DP = kwargs.get('DP', '0')
+        GQ = kwargs.get('GQ', '0')
+        PL = kwargs.get('PL', None)
         self.heterozygote = False
         self.homo_alt = False
         self.homo_ref = False

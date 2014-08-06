@@ -324,7 +324,7 @@ def main():
     # print(my_parser)
     nr_of_variants = 0
     for variant in my_parser:
-        # print('\t'.join([variant[head] for head in my_parser.header]))
+        print('\t'.join([variant[head] for head in my_parser.header]))
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
     print('Time to parse: %s' % str(datetime.now()-start))
