@@ -61,17 +61,20 @@ class Genotype(object):
         self.phased = False
         self.depth_of_coverage = 0
         self.quality_depth = 0
+        self.genotype_quality = 0
+        #Check phasing
         if '|' in GT:
             self.phased = True
-        
-        if len(GT) < 3: #This is the case when only one allele is present(eg. X-chromosome) and presented like '0' or '1'.
+        #Check the genotyping:
+        #This is the case when only one allele is present(eg. X-chromosome) and presented like '0' or '1':
+        if len(GT) < 3: 
             self.allele_1 = GT
             self.allele_2 = '.'
         else:
             self.allele_1 = GT[0]
             self.allele_2 = GT[-1]
-        
-        self.genotype = self.allele_1 +'/'+ self.allele_2 # The genotype should allways be represented on the same form
+        # The genotype should allways be represented on the same form
+        self.genotype = self.allele_1 +'/'+ self.allele_2
         
         if self.genotype != './.':
             self.genotyped = True
@@ -84,27 +87,27 @@ class Genotype(object):
             else:
                 self.heterozygote = True
                 self.has_variant = True
-        
+        #Check the allele depth:
         self.ref_depth = 0
         self.alt_depth = 0
         
-        #Genotype info:
         if len(AD) > 2:
             if AD[0].isdigit():
                 self.ref_depth = int(AD.split(',')[0])
             if AD[2].isdigit():
                 self.alt_depth = int(AD.split(',')[1])
+        self.quality_depth = self.ref_depth + self.alt_depth
+        #Check the depth of coverage:
         try:
             self.depth_of_coverage = int(DP)
         except ValueError:
             pass
-        
-        self.quality_depth = self.ref_depth + self.alt_depth
-        
+        #Check the genotype quality
         try:
             self.genotype_quality = float(GQ)
         except ValueError:
             pass
+        #Check the genotype likelihoods
         self.phred_likelihoods = []
         if PL:
             self.phred_likelihoods = [int(score) for score in PL.split(',')]
