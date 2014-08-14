@@ -59,6 +59,8 @@ class Genotype(object):
         self.has_variant = False
         self.genotyped = False
         self.phased = False
+        self.depth_of_coverage = 0
+        self.quality_depth = 0
         if '|' in GT:
             self.phased = True
         
@@ -83,8 +85,8 @@ class Genotype(object):
                 self.heterozygote = True
                 self.has_variant = True
         
-        self.ref_depth = AD[0]
-        self.alt_depth = AD[-1]
+        self.ref_depth = 0
+        self.alt_depth = 0
         
         #Genotype info:
         if len(AD) > 2:
@@ -96,6 +98,9 @@ class Genotype(object):
             self.depth_of_coverage = int(DP)
         except ValueError:
             pass
+        
+        self.quality_depth = self.ref_depth + self.alt_depth
+        
         try:
             self.genotype_quality = float(GQ)
         except ValueError:
