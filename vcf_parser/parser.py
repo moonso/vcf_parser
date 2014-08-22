@@ -65,6 +65,7 @@ Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 """
 
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import sys
 import os
@@ -284,8 +285,8 @@ class VCFParser(object):
                 info = info.split('=')
                 if info[0] == 'CSQ':
                     for annotation in info[1].split(','):
-                        vep_info = dict(zip(self.metadata.vep_columns,annotation.split('|')))
-                        vep_dict[vep_info['SYMBOL']] = vep_info
+                        vep_info = dict(zip(self.metadata.vep_columns, annotation.split('|')))
+                        vep_dict[vep_info.get('SYMBOL','-')] = vep_info
                 elif len(info) > 1:
                     info_dict[info[0]] = info[1]
                 else:
@@ -311,7 +312,14 @@ class VCFParser(object):
 def main():
     from datetime import datetime
     parser = argparse.ArgumentParser(description="Parse vcf headers.")
-    parser.add_argument('variant_file', type=str, nargs=1 , help='A file with variant information.')
+    parser.add_argument('variant_file', 
+                            type=str, 
+                            nargs=1, 
+                            help='A file with variant information.'
+    )
+    parser.add_argument('--vep', '-vep', 
+                            action="store_true", 
+                            help='If VEP info is provided.')
     args = parser.parse_args()
     infile = args.variant_file[0]
     my_parser = VCFParser(infile)
@@ -324,7 +332,9 @@ def main():
     # print(my_parser)
     nr_of_variants = 0
     for variant in my_parser:
-        print('\t'.join([variant[head] for head in my_parser.header]))
+        print('\t'.join([variant[head] for head in my_parser.header]).encode('utf-8'))
+        if args.vep:
+            pp(variant['vep_info'])
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
     print('Time to parse: %s' % str(datetime.now()-start))
