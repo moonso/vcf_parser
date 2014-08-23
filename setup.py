@@ -12,7 +12,7 @@ except ImportError:
 long_description = 'Tool for parsing Variant Call Format (VCF) files.'
 
 setup(name='vcf_parser',
-    version='0.7.3',
+    version='0.7.4',
     description='Parsing vcf files',
     author = 'Mans Magnusson',
     author_email = 'mans.magnusson@scilifelab.se',
@@ -23,6 +23,7 @@ setup(name='vcf_parser',
     keywords = ['parser', 'vcf', 'variants'],
     classifiers = [
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Development Status :: 4 - Beta",

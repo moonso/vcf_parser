@@ -230,6 +230,12 @@ class HeaderParser(object):
         self.info_dict[info_id] = info_line
         return
 
+    def add_version_tracking(self, info_id, version, date, command_line=''):
+        """Add a line with information about which software that was run and when to the header."""
+        other_line = '##Software=<ID='+info_id+',Version='+version+',Date='+date+', CommandLineOptions="'+command_line+'">'
+        self.other_dict[info_id] = other_line
+        return
+
 
 ####            Parser:         ####
 
@@ -331,6 +337,7 @@ def main():
     # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
     # print(my_parser)
     nr_of_variants = 0
+    my_parser.metadata.add_version_tracking('vcf_parser', '0.7.4', str(datetime.now()), 'infile='+infile)
     for variant in my_parser:
         print('\t'.join([variant[head] for head in my_parser.header]).encode('utf-8'))
         if args.vep:
@@ -338,6 +345,8 @@ def main():
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
     print('Time to parse: %s' % str(datetime.now()-start))
+    for line in my_parser.metadata.print_header():
+        print(line)
     # print my_parser.__dict__
     # for line in my_parser.metadata:
     #     print line, my_parser.metadata[line]
