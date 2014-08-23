@@ -337,7 +337,7 @@ def main():
     # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
     # print(my_parser)
     nr_of_variants = 0
-    my_parser.metadata.add_version_tracking('vcf_parser', '0.7.3', str(datetime.now()), 'infile='+infile)
+    my_parser.metadata.add_version_tracking('vcf_parser', '0.7.4', str(datetime.now()), 'infile='+infile)
     for variant in my_parser:
         print('\t'.join([variant[head] for head in my_parser.header]).encode('utf-8'))
         if args.vep:
