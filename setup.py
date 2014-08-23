@@ -23,6 +23,7 @@ setup(name='vcf_parser',
     keywords = ['parser', 'vcf', 'variants'],
     classifiers = [
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Development Status :: 4 - Beta",
