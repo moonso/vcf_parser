@@ -352,7 +352,13 @@ class VCFParser(object):
                     help='If variants are annotated with the Variant Effect Predictor.'
 )
 def cli(variant_file, vep):
-    "Parse a vcf file."
+    """Parses a vcf file.\n
+        \n
+        Usage:\n
+            parser infile.vcf\n
+        If pipe:\n
+            parser - 
+    """
     from datetime import datetime
     if variant_file == '-':
         my_parser = VCFParser(fsock=sys.stdin)
