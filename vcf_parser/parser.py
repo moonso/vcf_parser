@@ -71,8 +71,18 @@ import sys
 import os
 import gzip
 import re
-import argparse
-from codecs import open, getreader
+import pkg_resources
+import click
+import locale
+
+from codecs import open, getreader, getwriter
+
+locale.setlocale(locale.LC_ALL, '')
+lang, encoding = locale.getdefaultlocale()
+
+if sys.version_info < (3, 0):
+    # sys.stdin = getreader(encoding)(sys.stdin)
+    sys.stdout = getwriter(encoding)(sys.stdout)
 if sys.version_info < (2, 7):
     from ordereddict import OrderedDict
 else:
@@ -81,6 +91,10 @@ else:
 from pprint import pprint as pp
 
 from vcf_parser import genotype
+import vcf_parser
+
+# Version = pkg_resources.require("vcf_parser")[0].version
+Version = '0.7.3'
 
 class HeaderParser(object):
     """Parses a file with family info and creates a family object with individuals."""
@@ -242,19 +256,32 @@ class HeaderParser(object):
 
 class VCFParser(object):
     """docstring for VCFParser"""
-    def __init__(self, infile=None):
+    def __init__(self, infile=None, fsock=None):
         super(VCFParser, self).__init__()
-        self.infile = infile
+        
+        if not (fsock or infile):
+            raise Exception('You must provide at least fsock or filename')
+        
+        # print('Hello' ,infile, type(infile), fsock, type(fsock))
+        if fsock:
+            if not infile and hasattr(fsock, 'name'):
+                if sys.version_info < (3, 0):
+                    sys.stdin = getreader(encoding)(fsock)            
+                self.vcf = sys.stdin
+        
+        else:
+            file_name, file_extension = os.path.splitext(infile)
+            if file_extension == '.gz':
+                self.vcf = getreader('utf-8')(gzip.open(infile), errors='replace')
+            elif file_extension == '.vcf':
+                self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
+            else:
+                raise SyntaxError("""File is not in a supported format! 
+                                    Or use correct ending(.vcf or .vcf.gz)""")
+        
         self.metadata = HeaderParser()
         self.individuals = []
         self.header = []
-        file_name, file_extension = os.path.splitext(self.infile)
-        if file_extension == '.gz':
-            self.vcf = getreader('utf-8')(gzip.open(infile), errors='replace')
-        elif file_extension == '.vcf':
-            self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
-        else:
-            raise SyntaxError('File is not in a supported format! Or use correct ending (.vcf or .vcf.gz)')
         
         self.next_line = self.vcf.readline().rstrip()
         self.current_line = self.next_line
@@ -315,49 +342,34 @@ class VCFParser(object):
         return '\n'.join(self.metadata.print_header())
         
 
-def main():
+@click.command()
+@click.argument('variant_file',
+        type=click.Path(),
+        metavar='<vcf_file> or -'
+)
+@click.option('--vep', 
+                    is_flag=True,
+                    help='If variants are annotated with the Variant Effect Predictor.'
+)
+def cli(variant_file, vep):
+    "Parse a vcf file."
     from datetime import datetime
-    parser = argparse.ArgumentParser(description="Parse vcf headers.")
-    parser.add_argument('variant_file', 
-                            type=str, 
-                            nargs=1, 
-                            help='A file with variant information.'
-    )
-    parser.add_argument('--vep', '-vep', 
-                            action="store_true", 
-                            help='If VEP info is provided.')
-    args = parser.parse_args()
-    infile = args.variant_file[0]
-    my_parser = VCFParser(infile)
+    if variant_file == '-':
+        my_parser = VCFParser(fsock=sys.stdin)
+    else:
+        my_parser = VCFParser(infile = variant_file)
     start = datetime.now()
-    # my_parser.parse()
-    # print('parsing')
-    # my_parser.metadataparser.add_info('ANN', '.', 'String', 'Annotates what feature(s) this variant belongs to.')
-    # my_parser.metadataparser.add_info('Comp', '.', 'String', "':'-separated list of compound pairs for this variant.")
-    # my_parser.metadataparser.add_info('GM', '.', 'String', "':'-separated list of genetic models for this variant.")
-    # print(my_parser)
     nr_of_variants = 0
-    my_parser.metadata.add_version_tracking('vcf_parser', '0.7.4', str(datetime.now()), 'infile='+infile)
+    my_parser.metadata.add_version_tracking('vcf_parser', Version, str(datetime.now()), 'infile=stream')
+    for line in my_parser.metadata.print_header():
+        print(line)
     for variant in my_parser:
-        print('\t'.join([variant[head] for head in my_parser.header]).encode('utf-8'))
-        if args.vep:
+        print('\t'.join([variant[head] for head in my_parser.header]))
+        if vep:
             pp(variant['vep_info'])
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
     print('Time to parse: %s' % str(datetime.now()-start))
-    for line in my_parser.metadata.print_header():
-        print(line)
-    # print my_parser.__dict__
-    # for line in my_parser.metadata:
-    #     print line, my_parser.metadata[line]
-    # print '\t'.join(my_parser.header)
-    # print my_parser.line_counter
-    # print my_parser.individuals
-    # for individual in my_parser.individuals:
-    #     for genotype in my_parser.individuals[individual]:
-    #         print individual, genotype, my_parser.individuals[individual][genotype]
-    
-
 
 if __name__ == '__main__':
-    main()
+    cli()
