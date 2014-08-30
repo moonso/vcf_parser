@@ -10,6 +10,15 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
         print(variant)
 ```
 
+**vcf_parser also works on streams now.**
+
+Vcf parser is really a lightweight version of [PyVCF](https://github.com/jamescasbon/PyVCF) with most of it's code borrowed and modified from there.
+
+The idea was to make a faster and more flexible tool that mostly work with python dictionarys.
+The drawback is inacurracy, while **PyVCF** tests if each row in the vcf is on the correct format vcf_parser is much more sloppier.
+
+It is easy to access information for each variant, edit the information and edit the headers.
+
 Returns dictionary with the vcf info for each variant.
 The genotype information is converted to a genotype object and stored in a dictionary
 
@@ -38,7 +47,7 @@ The genotype class have the following attributes for phrasing common questions:
     - genotype_quality FLOAT
     - phased BOOL
 
-Vep information, if present is parsed into
+Vep information, if present, is parsed into
 
     variant['vep_dict']
 
@@ -110,4 +119,17 @@ and looks like
                    'VQSLOD': '4.52',
                    'culprit': 'FS',
                    'set': 'variant'}
+
+
+###Print a variant in it´s original format:###
+
+	print '\t'.join([[variant[head] for head in my_parser.header])
+
+###Add metadata information:###
+
+Adding INFO field:
+
+        my_parser.metadata.add_info('my_new_id', <number>, <type>, <description>)
+
+Where 'number', 'type' and 'description' follows the [VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41) specification.  
 
