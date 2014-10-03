@@ -332,7 +332,10 @@ class VCFParser(object):
             
             variant['genotypes'] = genotype_dict            
             variant['info_dict'] = info_dict
-            variant['variant_id'] = '_'.join([variant['CHROM'], variant['POS'], variant['REF'], variant['ALT']])
+            variant['variant_id'] = '_'.join([variant['CHROM'], 
+                                            variant['POS'], 
+                                            variant['REF'], 
+                                            variant['ALT'].split(',')[0]])
             variant['vep_info'] = vep_dict
             return variant
         
