@@ -246,8 +246,8 @@ class HeaderParser(object):
 
     def add_version_tracking(self, info_id, version, date, command_line=''):
         """Add a line with information about which software that was run and when to the header."""
-        other_line = '##Software=<ID='+info_id+',Version='+version+',Date='+date+', CommandLineOptions="'+command_line+'">'
-        self.other_dict[info_id] = other_line
+        other_line = ['##Software=<ID=%s' % info_id ,'Version=%s' % version, 'Date="%s"' % date, 'CommandLineOptions="%s">' % command_line]
+        self.other_dict[info_id] = ','.join(other_line)
         return
 
 
