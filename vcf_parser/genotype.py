@@ -54,6 +54,7 @@ class Genotype(object):
         GQ = kwargs.get('GQ', '0')
         PL = kwargs.get('PL', None)
         self.heterozygote = False
+        self.allele_depth = False
         self.homo_alt = False
         self.homo_ref = False
         self.has_variant = False
@@ -65,6 +66,7 @@ class Genotype(object):
         #Check phasing
         if '|' in GT:
             self.phased = True
+        self.allele_depth = AD.split(',')
         #Check the genotyping:
         #This is the case when only one allele is present(eg. X-chromosome) and presented like '0' or '1':
         if len(GT) < 3: 
