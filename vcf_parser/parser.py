@@ -102,6 +102,9 @@ class HeaderParser(object):
         super(HeaderParser, self).__init__()
         self.info_lines=[]
         self.info_dict=OrderedDict()
+        #This is a dictionary cantaining specific information about the info fields
+        #It will have info name as key and then another dictionary with ID, Number, Type and Description
+        self.extra_info = {}
         
         self.filter_lines=[]
         self.filter_dict=OrderedDict()
@@ -169,6 +172,8 @@ class HeaderParser(object):
             if not match:
                 raise SyntaxError("One of the INFO lines is malformed: %s" % line)
             matches = [match.group('id'), match.group('number'), match.group('type'), match.group('desc')]
+            # extra_info is a dictionary to check the metadata about the INFO values:
+            self.extra_info[matches[0]] = dict(zip(self.header_keys['info'][1:], matches[1:]))
             info_line = dict(list(zip(self.header_keys['info'],matches)))
             if len(info_line['Description'].split('Format:')) > 1:
                 info_line['Format'] = [info.strip() for info in info_line['Description'].split('Format:')][-1]
@@ -256,7 +261,7 @@ class HeaderParser(object):
 
 class VCFParser(object):
     """docstring for VCFParser"""
-    def __init__(self, infile=None, fsock=None):
+    def __init__(self, infile=None, fsock=None, split_variants=False):
         super(VCFParser, self).__init__()
         
         if not (fsock or infile):
@@ -279,6 +284,7 @@ class VCFParser(object):
                 raise SyntaxError("""File is not in a supported format! 
                                     Or use correct ending(.vcf or .vcf.gz)""")
         
+        self.split_variants = split_variants
         self.metadata = HeaderParser()
         self.individuals = []
         self.header = []
@@ -297,47 +303,172 @@ class VCFParser(object):
         self.header = self.metadata.header
             
     def __iter__(self):
-        return self
+        return self.format_variant()
+        # return self
     
-    def next(self):
-        """Works for python 2.x"""
-        return self.__next__()
+    # def next(self):
+    #     """Works for python 2.x"""
+    #     return self.__next__()
+    #
+    # def __next__(self):
+    #
+    #     variant = dict(zip(self.header, self.next_line.split('\t')))
+    #     self.next_line = self.vcf.readline().rstrip()
+    #
+    #     if len(variant) < 8:
+    #         raise StopIteration
+    #     else:
+    #         return self.format_variant(variant)
+    def build_new_info_string(self, info_dict):
+        """
+        Build a new INFO string based on the information in the info_dict.
+        
+        Args:
+            info_dict: A dictionary with information from the vcf file
+        
+        Returns:
+            String: A string that is on the proper vcf format for the INFO column
+        """
+        info_list = []
+        for info in info_dict:
+            if info_dict[info]:
+                info_list.append('='.join([info, ','.join(info_dict[info])]))
+            else:
+                info_list.append(info)
+        return ';'.join(info_list)
+            
+    def build_vep_annotation(self, csq_info):
+        """
+        Build a dictionary with the vep information from the vep annotation.
+        
+        Args:
+            csq_info: A list with the vep annotations from the vcf line.
+        
+        Returns:
+            Dictionary: A dictionary with the alternative alleles as keys and a list of annotations
+            for each alternative alleles. One key named gene_ids, value is a set with the genes found. 
+        """
+        vep_dict = {'gene_ids' : set([])}
+        for vep_annotation in csq_info:
+            vep_info = dict(zip(self.metadata.vep_columns, vep_annotation.split('|')))
+            alternative_allele = vep_info.get('Allele','-')
+            if alternative_allele in vep_dict:
+                vep_dict[alternative_allele].append(vep_info)
+            else:
+                vep_dict[alternative_allele] = [vep_info]
+            vep_dict['gene_ids'].add(vep_info.get('SYMBOL','-'))
+        return vep_dict
     
-    def __next__(self):
+    def make_splitted_variants(self, variant_dict):
+        """
+        Checks if there are multiple alternative alleles and splitts the variant.
+        If there are multiple alternatives the info fields, vep annotations and genotype calls will
+        be splitted in the correct way
         
-        variant = dict(zip(self.header, self.next_line.split('\t')))
-        self.next_line = self.vcf.readline().rstrip()
+        Args:
+            variant_dict: a dictionary with the varianinformation
         
-        if len(variant) < 8:
-            raise StopIteration
+        Returns:
+            List: A list of variant dictionaries with the splitted information
+        """
+        variants = []
+        alternatives = variant_dict['ALT'].split(',')
+        reference = variant_dict['REF']
+        if len(alternatives) > 1:
+            for alternative_number, alternative in enumerate(alternatives):
+                # We have to treat insertions and deletions with causion when checking vep entrys
+                # If we have an insertion we should remove the first position of the alternative
+                if len(alternative) > len(reference)
+                variant = {}
+                info_dict = OrderedDict()
+                # This is a dict on the form {ALT:[{vep_info_dict}]}
+                vep_dict = {}
+                genotype_dict = {}
+                variant['CHROM'] = variant_dict['CHROM']
+                variant['POS'] = variant_dict['POS']
+                try:
+                    # There will not allways be one rsID for each alternative
+                    variant['ID'] = variant_dict['ID'].split(';')[alternative_number]
+                # If only one id is present for multiple alleles they all get the same ID
+                except IndexError:
+                    variant['ID'] = variant_dict['ID']
+                variant['REF'] = variant_dict['REF']
+                variant['ALT'] = alternative
+                variant['QUAL'] = variant_dict['QUAL']
+                variant['FILTER'] = variant_dict['FILTER']
+                variant['FORMAT'] = variant_dict['FORMAT']
+                
+                for info in variant_dict['info_dict']:
+                    if info:
+                        if self.metadata.extra_info[info]['Number'] == 'A':
+                            try:
+                                # When we split the alleles we only want to annotate with the correct number
+                                info_dict[info] = [variant_dict['info_dict'][alternative_number]]
+                            except IndexError:
+                                # If there is only one annotation we choose that one
+                                info_dict[info] = [variant_dict['info_dict'][0]]
+                        elif info == 'CSQ':
+                            for annotation in info[1].split(','):
+                                vep_info = dict(zip(self.metadata.vep_columns, annotation.split('|')))
+                                alt_allele = vep_info.get('Allele','-')
+                                if alt_allele in vep_dict:
+                                    vep_dict[alt_allele].append(vep_info)
+                                else:
+                                    vep_dict[alt_allele] = [vep_info]
+                                vep_dict[vep_info.get('SYMBOL','-')] = vep_info
+                        
+                    else:
+                        info_dict[info] = False
+            variants.append(variant)
+            
         else:
-            info_dict = {}
+            variants.append(variant_dict)
+        return variants
+    
+    def format_variant(self):
+        """
+        Yield the variant in the right format. If the variants should be splitted on alternative alles
+        one variant for each alternative will be yielded.
+        """
+        for line in self.vcf:
+            variant_line = line.rstrip().split('\t')
+            variant = dict(zip(self.header, line.rstrip().split('\t')))
+        
+            info_dict = OrderedDict()
             vep_dict = {}
             genotype_dict = {}
             for info in variant.get('INFO', '').split(';'):
                 info = info.split('=')
-                if info[0] == 'CSQ':
-                    for annotation in info[1].split(','):
-                        vep_info = dict(zip(self.metadata.vep_columns, annotation.split('|')))
-                        vep_dict[vep_info.get('SYMBOL','-')] = vep_info
-                elif len(info) > 1:
-                    info_dict[info[0]] = info[1]
+                if len(info) > 1:
+                    #If the INFO entry is like key=value we store the value as a list
+                    info_dict[info[0]] = info[1].split(',')
                 else:
-                    info_dict[info[0]] = True
-                    
+                    info_dict[info[0]] = False
+            
+            # This is the case when we have VEP annotated vcf files:
+            if 'CSQ' in info_dict:
+                vep_dict = self.build_vep_annotation(info_dict['CSQ'])
+            
             gt_format = variant.get('FORMAT', '').split(':')
+            
             for individual in self.individuals:
                 genotype_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
                 # ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
             
-            variant['genotypes'] = genotype_dict            
+            variant['genotypes'] = genotype_dict
             variant['info_dict'] = info_dict
-            variant['variant_id'] = '_'.join([variant['CHROM'], 
-                                            variant['POS'], 
-                                            variant['REF'], 
-                                            variant['ALT'].split(',')[0]])
+            variant['variant_id'] = '_'.join([variant['CHROM'],
+                                        variant['POS'],
+                                        variant['REF'],
+                                        variant['ALT'].split(',')[0]])
             variant['vep_info'] = vep_dict
-            return variant
+            
+            if self.split_variants:
+                # splitted_variants is a list with variants, one for each allele
+                for splitted_variant in self.make_splitted_variants(variant):
+                    yield splitted_variant
+            else:
+                yield variant
         
     
     def __str__(self):
@@ -354,7 +485,11 @@ class VCFParser(object):
                     is_flag=True,
                     help='If variants are annotated with the Variant Effect Predictor.'
 )
-def cli(variant_file, vep):
+@click.option('-s' ,'--split', 
+                    is_flag=True,
+                    help='Split the variants with multiallelic calls.'
+)
+def cli(variant_file, vep, split):
     """Parses a vcf file.\n
         \n
         Usage:\n
@@ -364,21 +499,24 @@ def cli(variant_file, vep):
     """
     from datetime import datetime
     if variant_file == '-':
-        my_parser = VCFParser(fsock=sys.stdin)
+        my_parser = VCFParser(fsock=sys.stdin, split_variants=split)
     else:
-        my_parser = VCFParser(infile = variant_file)
+        my_parser = VCFParser(infile = variant_file, split_variants=split)
     start = datetime.now()
     nr_of_variants = 0
-    my_parser.metadata.add_version_tracking('vcf_parser', Version, str(datetime.now()), 'infile=stream')
-    for line in my_parser.metadata.print_header():
-        print(line)
+    # my_parser.metadata.add_version_tracking('vcf_parser', Version, str(datetime.now()), 'infile=stream')
+    # for line in my_parser.metadata.print_header():
+    #     print(line)
     for variant in my_parser:
-        print('\t'.join([variant[head] for head in my_parser.header]))
-        if vep:
-            pp(variant['vep_info'])
+        pp(variant)
+        # print('\t'.join([variant[head] for head in my_parser.header]))
+        # if vep:
+        #     pp(variant['vep_info'])
         nr_of_variants += 1
     print('Number of variants: %s' % nr_of_variants)
-    print('Time to parse: %s' % str(datetime.now()-start))
+    # print('Time to parse: %s' % str(datetime.now()-start))
+    # pp(my_parser.metadata.extra_info)
+    
 
 if __name__ == '__main__':
     cli()
