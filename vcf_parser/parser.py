@@ -427,7 +427,12 @@ class VCFParser(object):
     
     def split_genotype(self, genotype, gt_format, alternative_number):
         """Take a genotype call and make a new one that is working for the new splitted variant"""
-        print(genotype, gt_format, alternative_number)
+        # print(genotype, gt_format, alternative_number)
+        splitted_genotype = genotype.split(':')
+        splitted_gt_format = gt_format.split(':')
+        for number, info in enumerate(splitted_genotype):
+            print(number, splitted_gt_format[number], info)
+            
     
     def make_splitted_variants(self, variant_dict):
         """
