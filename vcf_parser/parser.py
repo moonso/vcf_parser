@@ -170,7 +170,8 @@ class HeaderParser(object):
         elif line_info[0] == 'INFO':
             match = self.info_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the INFO lines is malformed: %s" % line)
+                print("\nOne of the INFO lines is malformed:\n%s\n" % line)
+                raise SyntaxError()
             matches = [match.group('id'), match.group('number'), match.group('type'), match.group('desc')]
             # extra_info is a dictionary to check the metadata about the INFO values:
             self.extra_info[matches[0]] = dict(zip(self.header_keys['info'][1:], matches[1:]))
@@ -185,35 +186,40 @@ class HeaderParser(object):
         elif line_info[0] == 'FILTER':
             match = self.filter_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the FILTER lines is malformed: %s" % line)
+                print("\nOne of the FILTER lines is malformed:\n%s\n" % line)
+                raise SyntaxError()
             matches = [match.group('id'), match.group('desc')]
             self.filter_lines.append(dict(list(zip(self.header_keys['filt'],matches))))
             self.filter_dict[match.group('id')] = line
         elif line_info[0] == 'contig':
             match = self.contig_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the contig lines is malformed: %s" % line)
+                print("One of the contig lines is malformed:\n %s" % line)
+                raise SyntaxError()
             matches = [match.group('id'), match.group('length')]
             self.contig_lines.append(dict(list(zip(self.header_keys['contig'],matches))))
             self.contig_dict[match.group('id')] = line
         elif line_info[0] == 'FORMAT':
             match = self.format_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the FORMAT lines is malformed: %s" % line)
+                print("\nOne of the FORMAT lines is malformed:\n%s\n" % line)
+                raise SyntaxError()
             matches = [match.group('id'), match.group('number'), match.group('type'), match.group('desc')]
             self.format_lines.append(dict(list(zip(self.header_keys['form'],matches))))
             self.format_dict[match.group('id')] = line
         elif line_info[0] == 'ALT':
             match = self.alt_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the ALT lines is malformed: %s" % line)
+                print("\nOne of the ALT lines is malformed:\n%s\n" % line)
+                raise SyntaxError()
             matches = [match.group('id'), match.group('desc')]
             self.alt_lines.append(dict(list(zip(self.header_keys['alt'],matches))))
             self.alt_dict[match.group('id')] = line
         else:
             match = self.meta_pattern.match(line)
             if not match:
-                raise SyntaxError("One of the meta data lines is malformed: %s" % line)
+                print("\nOne of the meta data lines is malformed:\n%s\n" % line)
+                raise SyntaxError()
             self.other_lines.append({match.group('key'): match.group('val')})
             self.other_dict[match.group('key')] = line
     
@@ -281,8 +287,8 @@ class VCFParser(object):
             elif file_extension == '.vcf':
                 self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
             else:
-                raise SyntaxError("""File is not in a supported format! 
-                                    Or use correct ending(.vcf or .vcf.gz)""")
+                print("""File is not in a supported format!\n Or use correct ending(.vcf or .vcf.gz)""")
+                raise SyntaxError()
         
         self.split_variants = split_variants
         self.metadata = HeaderParser()
@@ -305,29 +311,27 @@ class VCFParser(object):
             
     def __iter__(self):
         for line in self.vcf:
+            line = line.rstrip()
             variants = []
             if self.beginning:
                 first_variant = self.format_variant(self.next_line)
-                second_variant = self.format_variant(line)
-                if self.split_variants:
-                    if len(first_variant['ALT'].split(',')) > 1:
-                        for variant in self.make_splitted_variants(first_variant):
-                            variants.append(variant)
-                    if len(second_variant['ALT'].split(',')) > 1:
-                        for variant in self.make_splitted_variants(second_variant):
-                            variants.append(variant)
-                else:
+                if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
                     variants.append(first_variant)
-                    variants.append(second_variant)
-                    
+                else:
+                    for variant in self.make_splitted_variants(first_variant):
+                        variants.append(variant)
+                
                 self.beginning = False
-            else:
+            
+            if len(line.split('\t')) >= 8:
                 variant = self.format_variant(line)
-                if self.split_variants:
-                    # splitted_variants is a list with variants, one for each allele
-                    if len(variant['ALT'].split(',')) > 1:
-                         for splitted_variant in self.make_splitted_variants(variant):
-                             variants.append(splitted_variant)
+                if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
+                    variants.append(variant)
+            
+                else:
+                    for splitted_variant in self.make_splitted_variants(variant):
+                        variants.append(splitted_variant)
+            
             for variant in variants:
                 yield variant
     
@@ -541,7 +545,13 @@ class VCFParser(object):
             for info in variant_dict['info_dict']:
                 if info:
                     # Check if the info field have one entry per allele:
-                    if self.metadata.extra_info[info]['Number'] == 'A':
+                    try:
+                        number_of_values = self.metadata.extra_info[info]['Number'] == 'A'
+                    except KeyError:
+                        print("\nOne of the FILTER lines is missing in vcf header: %s \n" % info)
+                        raise 
+                        
+                    if number_of_values == 'A':
                         try:
                             # When we split the alleles we only want to annotate with the correct number
                             info_dict[info] = [variant_dict['info_dict'][info][alternative_number]]
@@ -654,8 +664,8 @@ def cli(variant_file, vep, split):
     start = datetime.now()
     nr_of_variants = 0
     # my_parser.metadata.add_version_tracking('vcf_parser', Version, str(datetime.now()), 'infile=stream')
-    # for line in my_parser.metadata.print_header():
-    #     print(line)
+    for line in my_parser.metadata.print_header():
+        print(line)
     for variant in my_parser:
         # pp(variant)
         print('\t'.join([variant[head] for head in my_parser.header]))        
