@@ -460,38 +460,41 @@ class VCFParser(object):
                 alt_allele = '.'
                 try:
                     # Check the ref Allele
-                    if gt[0] != '.':
-                        # In this case we have a homozygous call:
+                    if gt[0] != '.' and gt[1] != '.':
+                        ref_allele = '0'
+                        alt_allele = '0'
                         if gt[0] == gt[1]:
+                            # In this case we have a homozygous call:
                             if int(gt[0]) == alternative_number + 1:
                                 ref_allele = '1'
                                 alt_allele = '1'
+                        else:
+                            if int(gt[0]) == alternative_number + 1 or int(gt[1]) == alternative_number + 1:
+                                alt_allele = '1'                        
+                    else:
+                    # We now know that at least one of the alleles are uncalled
+                        if gt[0] != '.':
+                            if int(gt[0]) == alternative_number + 1:
+                                ref_allele = '1'
                             else:
                                 ref_allele = '0'
-                                alt_allele = '0'
-                        elif gt[0] == '0':
-                            ref_allele = '0'
-                        
-                        if gt[1] != '.':
-                            if gt[1] == '0':
-                                alt_allele = '0'
-                            # Now we know that both alleles are genotyped and not homozygous
-                            # This means that reference must be 0
+                        elif gt[1] != '.':
+                            if int(gt[1]) == alternative_number + 1:
+                                alt_allele = '1'
                             else:
-                                if int(gt[0]) == alternative_number + 1 or int(gt[1]) == alternative_number + 1:
-                                    ref_allele = '0'
-                                    alt_allele = '1'
-                                else:
-                                    ref_allele = '0'
-                                    alt_allele = '0'
+                                alt_allele = '0'
                 except (ValueError, KeyError):
                     pass
+                
                 if phased:
                     new_genotype.append('|'.join([ref_allele,alt_allele]))
                 else:
-                    new_genotype.append('/'.join([ref_allele,alt_allele]))
+                    new_genotype.append('/'.join([ref_allele,alt_allele]))            
             elif gt_info == 'AD':
-                ad = genotype_info.split(',')[alternative_number:alternative_number + 2]
+                ad = []
+                # The reference depth will allways be the original depth now
+                ad.append(genotype_info.split(',')[0])
+                ad.append(genotype_info.split(',')[alternative_number+1])
                 new_genotype.append(','.join(ad))
             elif gt_info == 'DP':
                 new_genotype.append(genotype_info)
