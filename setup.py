@@ -12,15 +12,27 @@ except ImportError:
 long_description = 'Tool for parsing Variant Call Format (VCF) files. Works like a lightweight version of PyVCF.'
 
 setup(name='vcf_parser',
-    version='0.9',
+    version='1.0',
     description='Parsing vcf files',
     author = 'Mans Magnusson',
     author_email = 'mans.magnusson@scilifelab.se',
     url = 'http://github.com/moonso/vcf_parser',
     license = 'MIT License',
-    install_requires=['vcf_parser', 'pytest', 'click'],
-    packages = ['vcf_parser'],
-    keywords = ['parser', 'vcf', 'variants'],
+    install_requires=[
+        'pytest', 
+        'click'
+    ],
+    packages = [
+        'vcf_parser'
+    ],
+    keywords = [
+        'parser', 
+        'vcf', 
+        'variants'
+    ],
+    scripts = [
+        'scripts/vcf_parser'
+    ],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
