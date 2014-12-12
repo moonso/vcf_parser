@@ -1,7 +1,11 @@
 #VCF Parser#
 Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamescasbon/PyVCF)
 
+**vcf_parser can split multi allelic calls in vcf now.**
+
     pip install vcf_parser
+
+If used within a python environment:
 
 ```python3
     from vcf_parser import parser
@@ -10,7 +14,11 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
         print(variant)
 ```
 
-**vcf_parser can split multi allelic calls in vcf now.**
+or used as a command line tool
+
+    vcf_parser examples/test_vcf.vcf --split
+
+Prints a new vcf with splitted variants to screen.
 
 Vcf parser is really a lightweight version of [PyVCF](https://github.com/jamescasbon/PyVCF) with most of it's code borrowed and modified from there.
 
