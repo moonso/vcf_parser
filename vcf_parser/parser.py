@@ -399,7 +399,6 @@ class VCFParser(object):
             elif len(alternative) > len(reference):
                 insertions.append(alternative)
                 vep_insertions.append(alternative[1:])
-        
         for vep_annotation in csq_info:
             vep_info = dict(zip(self.metadata.vep_columns, vep_annotation.split('|')))
             # If we only have one alternative then all vep annotations will represent that alternative:
@@ -424,13 +423,13 @@ class VCFParser(object):
                         if vep_allele in substitutions:
                             alternative_allele = vep_allele
             
-            if alternative_allele in vep_dict:
-                vep_dict[alternative_allele].append(vep_info)
-            else:
-                vep_dict[alternative_allele] = [vep_info]
+                if alternative_allele in vep_dict:
+                    vep_dict[alternative_allele].append(vep_info)
+                else:
+                    vep_dict[alternative_allele] = [vep_info]
+            
             # Save the gene annotations for this variant:
             vep_dict['gene_ids'].add(vep_info.get('SYMBOL','-'))
-        
         return vep_dict
     
     def build_new_vep_string(self, vep_info):
