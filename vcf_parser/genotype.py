@@ -66,7 +66,6 @@ class Genotype(object):
         #Check phasing
         if '|' in GT:
             self.phased = True
-        self.allele_depth = AD.split(',')
         #Check the genotyping:
         #This is the case when only one allele is present(eg. X-chromosome) and presented like '0' or '1':
         if len(GT) < 3: 
@@ -93,11 +92,14 @@ class Genotype(object):
         self.ref_depth = 0
         self.alt_depth = 0
         
-        if len(AD) > 2:
-            if AD[0].isdigit():
-                self.ref_depth = int(AD.split(',')[0])
-            if AD[2].isdigit():
-                self.alt_depth = int(AD.split(',')[1])
+        allele_depths = AD.split(',')
+        
+        if len(allele_depths) > 1:
+            if allele_depths[0].isdigit():
+                self.ref_depth = int(allele_depths[0])
+            if allele_depths[1].isdigit():
+                self.alt_depth = int(allele_depths[1])
+        
         self.quality_depth = self.ref_depth + self.alt_depth
         #Check the depth of coverage:
         try:

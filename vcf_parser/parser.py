@@ -619,7 +619,7 @@ class VCFParser(object):
         
         for individual in self.individuals:
             genotype_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
-            # ind_dict[individual] = dict(zip(gt_format, variant[individual].split(':')))
+        
         
         variant['genotypes'] = genotype_dict
         variant['info_dict'] = info_dict
