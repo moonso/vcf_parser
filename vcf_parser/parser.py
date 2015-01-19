@@ -327,7 +327,7 @@ class VCFParser(object):
                 variant = self.format_variant(line)
                 if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
                     variants.append(variant)
-            
+                
                 else:
                     for splitted_variant in self.make_splitted_variants(variant):
                         variants.append(splitted_variant)
@@ -590,6 +590,113 @@ class VCFParser(object):
             
             yield variant
             
+    def build_models_dict(self, annotated_models):
+        """
+        Take a list with annotated genetic inheritance patterns for each
+        family and returns a dictionary with family_id as key and a list of
+        genetic models as value.
+        
+        Args:
+            annotated_models    : A list on the form ['1:AD','2:AR_comp|AD_dn']
+        
+        Returns:
+            parsed_models       : A dictionary on the form
+                                    {
+                                        1:['AD'],
+                                        2:['AD_dn','AR_comp']
+                                    }
+        
+        """
+        parsed_models = {}
+        for family_annotation in annotated_models:
+            family_id = family_annotation.split(':')[0]
+            models = family_annotation.split(':')[1].split('|')
+            parsed_models[family_id] = models
+        
+        return parsed_models
+    
+    def build_rank_score_dict(self, rank_scores):
+        """
+        Take a list with annotated rank scores for each family and returns a 
+        dictionary with family_id as key and a list of genetic models as value.
+        
+        Args:
+            rank_scores    : A list on the form ['1:12','2:20']
+        
+        Returns:
+            ranc_scores       : A dictionary on the form
+                                    {
+                                        1:12,
+                                        2:20
+                                    }
+        
+        """
+        rank_scores = {}
+        for family in rank_scores:
+            family_id = family.split(':')[0]
+            score = family.split(':')[1]
+            rank_scores[family_id] = score
+        
+        return rank_scores
+    
+    def build_compounds_dict(self, compounds):
+        """
+        Take a list with annotated compound variants for each family and 
+        returns a dictionary with family_id as key and a list of dictionarys
+        that holds the information about the compounds.
+        
+        Args:
+            compounds    : A list that can be either on the form 
+                            [
+                                '1:1_23_A_C|1_24_T_A',
+                                '2:1_24_T_A'
+                            ]
+                            or if the compounds are scored:
+                            [
+                                '1:1_23_A_C>24|1_24_T_A>19',
+                                '2:1_24_T_A>17'
+                            ]
+        
+        Returns:
+            parsed_compounds : A dictionary on the form
+                                    {
+                                        1:[
+                                            {
+                                                'variant_id':'1_23_A_C',
+                                                'compound_score:24
+                                            },
+                                            {
+                                                'variant_id':'1_24_T_A',
+                                                'compound_score:19
+                                            },
+                                        ],
+                                        2:[
+                                            {'variant_id':'1_24_T_A',
+                                             'compound_score':17
+                                            }
+                                        ]
+                                    }
+        
+        """
+        parsed_compounds = {}
+        for family in compounds:
+            family_id = family.split(':')[0]
+            parsed_compounds[family_id] = []
+            compound_list = family.split(':')[1].split('|')
+            for compound in compound_list:
+                compound_id = compound.split('>')[0]
+                try:
+                    compound_score = compound.split('>')[1]
+                except IndexError:
+                    compound_score = None
+                parsed_compounds[family_id].append(
+                    {
+                        'variant_id': compound_id,
+                        'compound_score': compound_score
+                    }
+                )
+        
+        return parsed_compounds
     
     def format_variant(self, line):
         """
@@ -601,7 +708,10 @@ class VCFParser(object):
         
         info_dict = OrderedDict()
         vep_dict = {}
+        models_dict = {}
         genotype_dict = {}
+        compunds_dict = {}
+        rank_score_dict = {}
         alternatives = variant['ALT'].split(',')
         for info in variant.get('INFO', '').split(';'):
             info = info.split('=')
@@ -611,9 +721,25 @@ class VCFParser(object):
             else:
                 info_dict[info[0]] = False
         
-        # This is the case when we have VEP annotated vcf files:
+        #################### Some fields require special parsing ###########################
+        
+        ##### VEP ANNOTATIONS #####
         if 'CSQ' in info_dict:
             vep_dict = self.build_vep_annotation(info_dict['CSQ'], variant['REF'], alternatives)
+        
+        ##### GENMOD ANNOTATIONS #####
+        
+        if 'GeneticModels' in info_dict:
+            models_dict = self.build_models_dict(info_dict['GeneticModels'])
+        
+        if 'Compounds' in info_dict:
+            compunds_dict = self.build_compounds_dict(info_dict['Compounds'])
+        
+        if 'RankScore' in info_dict:
+            rank_score_dict = self.build_rank_score_dict(info_dict['RankScore'])
+        
+        
+        ##### GENOTYPE ANNOTATIONS #####
         
         gt_format = variant.get('FORMAT', '').split(':')
         
@@ -628,6 +754,9 @@ class VCFParser(object):
                                     variant['REF'],
                                     alternatives[0]])
         variant['vep_info'] = vep_dict
+        variant['genetic_models'] = models_dict
+        variant['compound_variants'] = compunds_dict
+        variant['rank_scores'] = rank_score_dict
         
         return variant
     
