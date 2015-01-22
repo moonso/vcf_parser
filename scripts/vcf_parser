@@ -9,8 +9,7 @@ Created by Måns Magnusson on 2014-12-12.
 Copyright (c) 2014 __MoonsoInc__. All rights reserved.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import sys
 import os
@@ -22,7 +21,7 @@ from codecs import getwriter
 
 import pkg_resources
 import vcf_parser
-from vcf_parser import parser
+from vcf_parser import VCFParser
 
 if sys.version_info < (3,0):
     sys.stdout = getwriter('UTF-8')(sys.stdout)
@@ -82,9 +81,9 @@ def vcf_parser(variant_file, vep, split, outfile, verbose):
     """
     from datetime import datetime
     if variant_file == '-':
-        my_parser = parser.VCFParser(fsock=sys.stdin, split_variants=split)
+        my_parser = VCFParser(fsock=sys.stdin, split_variants=split)
     else:
-        my_parser = parser.VCFParser(infile = variant_file, split_variants=split)
+        my_parser = VCFParser(infile = variant_file, split_variants=split)
     start = datetime.now()
     nr_of_variants = 0
     if outfile:
