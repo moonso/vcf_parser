@@ -8,8 +8,8 @@ Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamesca
 If used within a python environment:
 
 ```python3
-    from vcf_parser import parser
-    my_parser = parser.VCFParser(infile='infile.vcf')
+    from vcf_parser import VCFParser
+    my_parser = VCFParser(infile='infile.vcf')
     for variant in my_parser:
         print(variant)
 ```
@@ -33,7 +33,7 @@ It is easy to access information for each variant, edit the information and edit
 Returns dictionary with the vcf info for each variant.
 To split the multiallelic calls(and accurate splitting of INFO field including the VEP CSQ fiels) use:
     
-    my_parser = parser.VCFParser(infile='infile.vcf', split_variants=True)
+    my_parser = VCFParser(infile='infile.vcf', split_variants=True)
 
 The ordinary vcf entrys is stored by there header names, like
     
