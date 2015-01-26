@@ -624,20 +624,21 @@ class VCFParser(object):
             rank_scores    : A list on the form ['1:12','2:20']
         
         Returns:
-            ranc_scores       : A dictionary on the form
+            scores       : A dictionary on the form
                                     {
                                         1:12,
                                         2:20
                                     }
         
         """
-        rank_scores = {}
+        scores = {}
         for family in rank_scores:
-            family_id = family.split(':')[0]
-            score = family.split(':')[1]
-            rank_scores[family_id] = score
+            entry = family.split(':')
+            family_id = entry[0]
+            score = entry[1]
+            scores[family_id] = score
         
-        return rank_scores
+        return scores
     
     def build_compounds_dict(self, compounds):
         """
@@ -725,38 +726,62 @@ class VCFParser(object):
         
         ##### VEP ANNOTATIONS #####
         if 'CSQ' in info_dict:
-            vep_dict = self.build_vep_annotation(info_dict['CSQ'], variant['REF'], alternatives)
+            vep_dict = self.build_vep_annotation(
+                                            info_dict['CSQ'], 
+                                            variant['REF'], 
+                                            alternatives
+                                            )
         
         ##### GENMOD ANNOTATIONS #####
         
         if 'GeneticModels' in info_dict:
-            models_dict = self.build_models_dict(info_dict['GeneticModels'])
-        
+            models_dict = self.build_models_dict(
+                                            info_dict['GeneticModels']
+                                            )
         if 'Compounds' in info_dict:
-            compunds_dict = self.build_compounds_dict(info_dict['Compounds'])
-        
+            compunds_dict = self.build_compounds_dict(
+                                                info_dict['Compounds']
+                                                )
         if 'RankScore' in info_dict:
-            rank_score_dict = self.build_rank_score_dict(info_dict['RankScore'])
+            rank_score_dict = self.build_rank_score_dict(
+                                                info_dict['RankScore']
+                                                )
         
+        if 'IndividualRankScore' in info_dict:
+            individual_score_dict = self.build_rank_score_dict(
+                                                info_dict['IndividualRankScore']
+                                                )
         
         ##### GENOTYPE ANNOTATIONS #####
         
         gt_format = variant.get('FORMAT', '').split(':')
         
         for individual in self.individuals:
-            genotype_dict[individual] = genotype.Genotype(**dict(zip(gt_format, variant[individual].split(':'))))
-        
+            genotype_dict[individual] = genotype.Genotype(
+                                                    **dict(
+                                                        zip(
+                                                        gt_format,
+                                                        variant[individual].split(':')
+                                                        )
+                                                    )
+                                                )
         
         variant['genotypes'] = genotype_dict
         variant['info_dict'] = info_dict
-        variant['variant_id'] = '_'.join([variant['CHROM'],
-                                    variant['POS'],
-                                    variant['REF'],
-                                    alternatives[0]])
+        variant['variant_id'] = '_'.join(
+                                    [
+                                        variant['CHROM'],
+                                        variant['POS'],
+                                        variant['REF'],
+                                        alternatives[0]
+                                    ]
+                                )
+        
         variant['vep_info'] = vep_dict
         variant['genetic_models'] = models_dict
         variant['compound_variants'] = compunds_dict
         variant['rank_scores'] = rank_score_dict
+        variant['individual_scores'] = individual_score_dict
         
         return variant
     
@@ -794,16 +819,12 @@ def cli(variant_file, vep, split):
         my_parser = VCFParser(infile = variant_file, split_variants=split)
     start = datetime.now()
     nr_of_variants = 0
-    # my_parser.metadata.add_version_tracking('vcf_parser', Version, str(datetime.now()), 'infile=stream')
-    for line in my_parser.metadata.print_header():
-        print(line)
+    # for line in my_parser.metadata.print_header():
+    #     print(line)
     for variant in my_parser:
-        # pp(variant)
-        print('\t'.join([variant[head] for head in my_parser.header]))        
-        # if vep:
-        #     pp(variant['vep_info'])
+        pp(variant)
         nr_of_variants += 1
-    print('Number of variants: %s' % nr_of_variants)
+    # print('Number of variants: %s' % nr_of_variants)
     # print('Time to parse: %s' % str(datetime.now()-start))
     # pp(my_parser.metadata.extra_info)
     
