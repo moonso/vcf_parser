@@ -713,6 +713,7 @@ class VCFParser(object):
         genotype_dict = {}
         compunds_dict = {}
         rank_score_dict = {}
+        individual_score_dict = {}
         alternatives = variant['ALT'].split(',')
         for info in variant.get('INFO', '').split(';'):
             info = info.split('=')
