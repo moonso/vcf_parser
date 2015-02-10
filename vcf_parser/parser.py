@@ -64,8 +64,7 @@ Created by Måns Magnusson on 2013-01-17.
 Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import sys
 import os
@@ -77,12 +76,7 @@ import locale
 
 from codecs import open, getreader, getwriter
 
-locale.setlocale(locale.LC_ALL, '')
-lang, encoding = locale.getdefaultlocale()
 
-if sys.version_info < (3, 0):
-    # sys.stdin = getreader(encoding)(sys.stdin)
-    sys.stdout = getwriter(encoding)(sys.stdout)
 if sys.version_info < (2, 7):
     from ordereddict import OrderedDict
 else:
