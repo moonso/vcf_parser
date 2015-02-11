@@ -271,7 +271,7 @@ class VCFParser(object):
         if fsock:
             if not infile and hasattr(fsock, 'name'):
                 if sys.version_info < (3, 0):
-                    sys.stdin = getreader(encoding)(fsock)            
+                    sys.stdin = getreader('utf-8')(fsock)            
                 self.vcf = sys.stdin
         
         else:
