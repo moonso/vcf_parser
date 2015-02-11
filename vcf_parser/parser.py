@@ -350,15 +350,24 @@ class VCFParser(object):
     def build_vep_annotation(self, csq_info, reference, alternatives):
         """
         Build a dictionary with the vep information from the vep annotation.
-        Indels are handled different by vep depending on the number of alternative alleles there is for a variant.
+        Indels are handled different by vep depending on the number of 
+        alternative alleles there is for a variant.
         If only one alternative:
-            Insertion: vep represents the alternative by removing the first base from the vcf alternative.
+            
+            Insertion: vep represents the alternative by removing the first 
+            base from the vcf alternative.
+            
             Deletion: vep represents the alternative with '-'
         
         If there are several alternatives:
-            Insertion: vep represents the alternative by removing the first base from the vcf alternative(Like above ).
-            Deletion: If there is only one deletion among the alternatives it will allways be represented with '-'.
-            If there are multiple alternative deletions vep represents them by removing the first base from the vcf alternative.
+            
+            Insertion: vep represents the alternative by removing the first 
+            base from the vcf alternative(Like above).
+            
+            Deletion: If there is only one deletion among the alternatives it 
+            will allways be represented with '-'.
+            If there are multiple alternative deletions vep represents them by 
+            removing the first base from the vcf alternative.
             If the vcf line looks like:
                 1   970549  .   TGGG    TG,TGG
             vep annotation for alternatives will be: G,GG
@@ -367,8 +376,9 @@ class VCFParser(object):
             csq_info: A list with the vep annotations from the vcf line.
         
         Returns:
-            Dictionary: A dictionary with the alternative alleles as keys and a list of annotations
-            for each alternative alleles. One key named gene_ids, value is a set with the genes found. 
+            vep_dict (dict): A dictionary with the alternative alleles as keys 
+            and a list of annotations for each alternative alleles. 
+            One key named gene_ids, value is a set with the genes found. 
         """
         # These are the vep terms for the insertions and deletions
         VEP_INSERTION = 'feature_elongation'
@@ -427,7 +437,16 @@ class VCFParser(object):
         return vep_dict
     
     def build_new_vep_string(self, vep_info):
-        """Take a list with vep annotations and build a new vep string"""
+        """
+        Take a list with vep annotations and build a new vep string
+        
+        Args:
+            vep_info (list): A list with vep annotations
+        
+        Returns:
+            string: A string with the proper vep annotations
+        
+        """
         vep_strings = []
         for vep_annotation in vep_info:
             vep_info_list = [vep_annotation[vep_key] for vep_key in self.metadata.vep_columns]
@@ -435,7 +454,10 @@ class VCFParser(object):
         return ','.join(vep_strings)
     
     def split_genotype(self, genotype, gt_format, alternative_number):
-        """Take a genotype call and make a new one that is working for the new splitted variant"""
+        """
+        Take a genotype call and make a new one that is working for the new
+        splitted variant
+        """
         # print(genotype, gt_format, alternative_number)
         splitted_genotype = genotype.split(':')
         splitted_gt_format = gt_format.split(':')
@@ -502,9 +524,10 @@ class VCFParser(object):
     
     def make_splitted_variants(self, variant_dict):
         """
-        Checks if there are multiple alternative alleles and splitts the variant.
-        If there are multiple alternatives the info fields, vep annotations and genotype calls will
-        be splitted in the correct way
+        Checks if there are multiple alternative alleles and splitts the 
+        variant.
+        If there are multiple alternatives the info fields, vep annotations 
+        and genotype calls will be splitted in the correct way
         
         Args:
             variant_dict: a dictionary with the varianinformation
@@ -515,6 +538,7 @@ class VCFParser(object):
         variants = []
         alternatives = variant_dict['ALT'].split(',')
         reference = variant_dict['REF']
+        # Go through each of the alternative alleles:
         for alternative_number, alternative in enumerate(alternatives):
             variant = {}
             info_dict = OrderedDict()
@@ -537,16 +561,17 @@ class VCFParser(object):
             variant['FORMAT'] = gt_format
             
             
-            # pp(variant_dict['info_dict'])
             for info in variant_dict['info_dict']:
                 if info:
                     # Check if the info field have one entry per allele:
                     try:
-                        number_of_values = self.metadata.extra_info[info]['Number'] == 'A'
+                        number_of_values = self.metadata.extra_info[info]['Number']
                     except KeyError:
-                        print("\nOne of the FILTER lines is missing in vcf header: %s \n" % info)
+                        print(""""\nOne of the FILTER lines is missing in vcf 
+                                header: %s \n""" % info, file=sys.stderr)
                         raise 
-                        
+                    # If there if one value per allele we need to split it in
+                    # the proper way
                     if number_of_values == 'A':
                         try:
                             # When we split the alleles we only want to annotate with the correct number
