@@ -127,7 +127,7 @@ class HeaderParser(object):
         self.vep_columns = []
         self.info_pattern = re.compile(r'''\#\#INFO=<
             ID=(?P<id>[^,]+),
-            Number=(?P<number>-?\d+|\.|[AG]),
+            Number=(?P<number>-?\d+|\.|[AGR]),
             Type=(?P<type>Integer|Float|Flag|Character|String),
             Description="(?P<desc>[^"]*)"
             >''', re.VERBOSE)
