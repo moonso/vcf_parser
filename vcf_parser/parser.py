@@ -569,10 +569,16 @@ class VCFParser(object):
                     except KeyError:
                         print(""""\nOne of the FILTER lines is missing in vcf 
                                 header: %s \n""" % info, file=sys.stderr)
-                        raise 
+                        raise
+                    if info == 'CSQ':
+                        try:
+                            vep_dict[alternative] = variant_dict['vep_info'][alternative]
+                            info_dict['CSQ'] = [self.build_new_vep_string(variant_dict['vep_info'][alternative])]
+                        except KeyError:
+                            pass
                     # If there if one value per allele we need to split it in
                     # the proper way
-                    if number_of_values == 'A':
+                    elif number_of_values == 'A':
                         try:
                             # When we split the alleles we only want to annotate with the correct number
                             info_dict[info] = [variant_dict['info_dict'][info][alternative_number]]
@@ -580,12 +586,17 @@ class VCFParser(object):
                             # If there is only one annotation we choose that one
                             info_dict[info] = [variant_dict['info_dict'][info][0]]
                     # Choose the right vep info from the old variant
-                    elif info == 'CSQ':
+                    elif number_of_values == 'R':
+                        reference_value = variant_dict['info_dict'][info][0]
+                        new_info = [reference_value]
                         try:
-                            vep_dict[alternative] = variant_dict['vep_info'][alternative]
-                            info_dict['CSQ'] = [self.build_new_vep_string(variant_dict['vep_info'][alternative])]
-                        except KeyError:
+                            # When we split the alleles we only want to annotate with the correct number
+                            new_info.append(variant_dict['info_dict'][info][alternative_number + 1])
+                            info_dict[info] = new_info
+                        except IndexError:
+                            # If annotation is missing we keep the original annotation
                             pass
+                        
                     else:
                         info_dict[info] = variant_dict['info_dict'][info]
                     
