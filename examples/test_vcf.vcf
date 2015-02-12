@@ -1,4 +1,4 @@
-##fileformat=VCFv4.1
+##fileformat=VCFv4.2
 ##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
 ##INFO=<ID=CNT,Number=A,Type=Integer,Description="Number of times this allele was found in external db">
 ##contig=<ID=1,length=249250621,assembly=b37>
