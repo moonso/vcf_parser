@@ -557,8 +557,11 @@ class VCFParser(object):
             variant['ALT'] = alternative
             variant['QUAL'] = variant_dict['QUAL']
             variant['FILTER'] = variant_dict['FILTER']
-            gt_format = variant_dict['FORMAT']
-            variant['FORMAT'] = gt_format
+            
+
+            if 'FORMAT' in variant_dict:
+                gt_format = variant_dict['FORMAT']
+                variant['FORMAT'] = gt_format
             
             
             for info in variant_dict['info_dict']:
