@@ -74,8 +74,7 @@ import pkg_resources
 import click
 import locale
 
-from codecs import open, getreader, getwriter
-
+from codecs import open, getreader
 
 if sys.version_info < (2, 7):
     from ordereddict import OrderedDict
@@ -281,8 +280,8 @@ class VCFParser(object):
             elif file_extension == '.vcf':
                 self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
             else:
-                print("""File is not in a supported format!\n Or use correct ending(.vcf or .vcf.gz)""")
-                raise SyntaxError()
+                raise SyntaxError("File is not in a supported format!\n"
+                                    " Or use correct ending(.vcf or .vcf.gz)")
         
         self.split_variants = split_variants
         self.metadata = HeaderParser()
@@ -557,8 +556,11 @@ class VCFParser(object):
             variant['ALT'] = alternative
             variant['QUAL'] = variant_dict['QUAL']
             variant['FILTER'] = variant_dict['FILTER']
-            gt_format = variant_dict['FORMAT']
-            variant['FORMAT'] = gt_format
+            
+
+            if 'FORMAT' in variant_dict:
+                gt_format = variant_dict['FORMAT']
+                variant['FORMAT'] = gt_format
             
             
             for info in variant_dict['info_dict']:
