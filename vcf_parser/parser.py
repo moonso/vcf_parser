@@ -86,9 +86,6 @@ from pprint import pprint as pp
 from vcf_parser import genotype
 import vcf_parser
 
-# Version = pkg_resources.require("vcf_parser")[0].version
-Version = '0.7.3'
-
 class HeaderParser(object):
     """Parses a file with family info and creates a family object with individuals."""
     def __init__(self):
