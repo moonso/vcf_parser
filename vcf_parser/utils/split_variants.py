@@ -1,4 +1,7 @@
 from __future__ import unicode_literals
+
+import sys
+
 from logging import getLogger
 
 if sys.version_info < (2, 7):

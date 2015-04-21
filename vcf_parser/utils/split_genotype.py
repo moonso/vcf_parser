@@ -16,7 +16,9 @@ def split_genotype(genotype, gt_format, alternative_number):
     """
     logger = getLogger(__name__)
     splitted_genotype = genotype.split(':')
+    logger.debug("Parsing genotype {0}".format(splitted_genotype))
     splitted_gt_format = gt_format.split(':')
+    logger.debug("Parsing gt format {0}".format(splitted_gt_format))
     new_genotype = []
     phased = False
     for number, genotype_info in enumerate(splitted_genotype):

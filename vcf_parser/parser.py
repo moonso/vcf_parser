@@ -80,9 +80,7 @@ from codecs import open, getreader
 
 
 from vcf_parser import (Genotype, HeaderParser)
-from vcf_parser.utils import (format_variant, split_variant, build_rank_score_dict, build_info_string, 
-                            build_compounds_dict, build_models_dict, 
-                            build_vep_string, build_vep_annotation)
+from vcf_parser.utils import (format_variant, split_variants)
 
 ####            Parser:         ####
 

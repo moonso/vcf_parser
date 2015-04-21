@@ -40,8 +40,9 @@ def format_variant(line, individuals, vcf_header, vep_header):
     
     alternatives = variant['ALT'].split(',')
     
-    variant['info_dict'] = build_info_dict(variant.get('INFO', '')) 
+    info_dict = build_info_dict(variant.get('INFO', '')) 
     
+    variant['info_dict'] = info_dict
     #################### Some fields require special parsing ###########################
     
     ##### VEP ANNOTATIONS #####
@@ -74,6 +75,7 @@ def format_variant(line, individuals, vcf_header, vep_header):
     
     gt_format = variant.get('FORMAT', '').split(':')
     
+    genotype_dict = {}
     for individual in individuals:
         gt_info = variant[individual].split(':')
         gt_call = dict(zip(gt_format, gt_info))
