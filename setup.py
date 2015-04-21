@@ -23,7 +23,8 @@ setup(name='vcf_parser',
         'click'
     ],
     packages = [
-        'vcf_parser'
+        'vcf_parser',
+        'vcf_parser.utils'
     ],
     keywords = [
         'parser', 
