@@ -27,7 +27,14 @@ def format_variant(line, vcf_header, vep_header = []):
         individuals = vcf_header[9:]
     
     variant_line = line.rstrip().split('\t')
-    variant = dict(zip(vcf_header, line.rstrip().split('\t')))
+    
+    logger.debug("Checking if variant line is malformed")
+    if len(vcf_header) != len(variant_line):
+        raise SyntaxError("One of the variant lines is malformed: {0}".format(
+            line
+        ))
+    
+    variant = dict(zip(vcf_header, variant_line))
     
     # A dictionary with the vep information
     variant['vep_info'] = {}

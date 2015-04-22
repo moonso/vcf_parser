@@ -2,6 +2,7 @@ from vcf_parser.utils import format_variant
 from vcf_parser import Genotype
 
 import sys
+import pytest
 
 if sys.version_info < (2, 7):
     from ordereddict import OrderedDict
@@ -38,3 +39,18 @@ def test_simple_variant():
     assert variant['info_dict'] == info_dict
     assert type(variant['genotypes']['mother']) == type(Genotype())
 
+def test_malformed_line():
+    """
+    Test if proper behaviour with malformed vcf line
+    """
+    # Missing position
+    variant_line = "1\t.\tA\tT\t100\tPASS\tMQ=1\tGT:GQ\t0/1:60\t"\
+                    "0/1:60\t1/1:60"
+    vcf_header = [
+        'CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT',
+        'father','mother','proband'
+    ]
+    with pytest.raises(SyntaxError):
+        format_variant(variant_line, vcf_header)
+    
+    

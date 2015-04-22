@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from logging import getLogger
 
-def split_genotype(genotype, gt_format, alternative_number):
+def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0'):
     """
     Take a genotype call and make a new one that is working for the new
     splitted variant
@@ -10,6 +10,8 @@ def split_genotype(genotype, gt_format, alternative_number):
         genotype (str): The original genotype call
         gt_format (str): The format of the gt call
         alternative_number (int): What genotype call should we return
+        allele_symbol (str): How should the unobserved allele be represented
+                             when genotype is splitted
     
     Returns:
         new_genotype (str): A string that represents the new genotype
@@ -34,8 +36,8 @@ def split_genotype(genotype, gt_format, alternative_number):
             try:
                 # Check the ref Allele
                 if gt[0] != '.' and gt[1] != '.':
-                    ref_allele = '0'
-                    alt_allele = '0'
+                    ref_allele = allele_symbol
+                    alt_allele = allele_symbol
                     if gt[0] == gt[1]:
                         # In this case we have a homozygous call:
                         if int(gt[0]) == alternative_number + 1:
