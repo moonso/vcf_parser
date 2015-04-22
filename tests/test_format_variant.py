@@ -19,8 +19,7 @@ def test_simple_variant():
         'CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT',
         'father','mother','proband'
     ]
-    vep_header = []
-    variant = format_variant(variant_line, individuals, vcf_header, vep_header)
+    variant = format_variant(variant_line, vcf_header)
     info_dict = OrderedDict()
     info_dict['MQ'] = ['1']
     

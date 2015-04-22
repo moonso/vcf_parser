@@ -5,7 +5,7 @@ from vcf_parser import Genotype
 from vcf_parser.utils import (build_info_dict, build_vep_annotation, 
 build_compounds_dict, build_rank_score_dict)
 
-def format_variant(line, individuals, vcf_header, vep_header):
+def format_variant(line, vcf_header, vep_header = []):
     """
     Yield the variant in the right format. 
     
@@ -21,6 +21,10 @@ def format_variant(line, individuals, vcf_header, vep_header):
                         and how many alternatives there are
     """
     logger = getLogger(__name__)
+    
+    individuals = []
+    if len(vcf_header) > 9:
+        individuals = vcf_header[9:]
     
     variant_line = line.rstrip().split('\t')
     variant = dict(zip(vcf_header, line.rstrip().split('\t')))

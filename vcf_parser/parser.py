@@ -90,6 +90,18 @@ class VCFParser(object):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
+        self.infile = infile
+        self.fsock = fsock
+        self.split_variants = split_variants
+        self.logger.info("Split variants = {0}".format(self.split_variants))
+        
+        self.logger.info("Initializing HeaderParser")
+        self.metadata = HeaderParser()
+        
+        # If there are no file or stream the user can add variants manually.
+        # These will be added to self.variants
+        self.variants = []
+        
         if not (fsock or infile):
             raise IOError('You must provide at least fsock or filename')
         
@@ -112,11 +124,6 @@ class VCFParser(object):
                 raise IOError("File is not in a supported format!\n"
                                     " Or use correct ending(.vcf or .vcf.gz)")
         
-        self.split_variants = split_variants
-        self.logger.info("Split variants = {0}".format(self.split_variants))
-        
-        self.logger.info("Initializing HeaderParser")
-        self.metadata = HeaderParser()
         # These are the individuals described in the header
         self.individuals = []
         # This is the header line of the vcf
@@ -178,7 +185,11 @@ class VCFParser(object):
     def __str__(self):
         """return the headers header lines to screen."""
         return '\n'.join(self.metadata.print_header())
-        
+    
+    def __repr__(self):
+        return "Parser(infile={0},fsock={1},split_variants={2})".format(
+            self.infile, self.fsock, self.split_variants
+        )
 
 @click.command()
 @click.argument('variant_file',
