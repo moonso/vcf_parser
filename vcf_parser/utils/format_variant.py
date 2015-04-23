@@ -22,7 +22,7 @@ def is_number(s):
         return False
     
 
-def format_variant(line, header_parser):
+def format_variant(line, header_parser, skip_info_check=False):
     """
     Yield the variant in the right format. 
     
@@ -73,40 +73,41 @@ def format_variant(line, header_parser):
     info_dict = build_info_dict(variant.get('INFO', ''))
     
     # Check that the entry is on the proper format_
-    for info in info_dict:
-        annotation = info_dict[info]
-        extra_info = header_parser.extra_info.get(info, None)
-        if not extra_info:
-            logger.warning("The INFO field {0} is not specified in vcf"\
-            " header. {1}".format(info, line))
-        else:
-            number = extra_info['Number']
-            if is_number(number):
-                number_of_entrys = float(number)
-                if number_of_entrys != 0:
-                    if len(annotation) != number_of_entrys:
+    if not skip_info_check:
+        for info in info_dict:
+            annotation = info_dict[info]
+            extra_info = header_parser.extra_info.get(info, None)
+            if not extra_info:
+                logger.warning("The INFO field {0} is not specified in vcf"\
+                " header. {1}".format(info, line))
+            else:
+                number = extra_info['Number']
+                if is_number(number):
+                    number_of_entrys = float(number)
+                    if number_of_entrys != 0:
+                        if len(annotation) != number_of_entrys:
+                            raise SyntaxError("Info field {0} has the wrong "\
+                            "number of entrys according to the vcf header".format(
+                                '='.join([info, ','.join(annotation)])
+                            ))
+                elif number == 'A':
+                    if len(annotation) != len(alternatives):
                         raise SyntaxError("Info field {0} has the wrong "\
                         "number of entrys according to the vcf header".format(
                             '='.join([info, ','.join(annotation)])
                         ))
-            elif number == 'A':
-                if len(annotation) != len(alternatives):
-                    raise SyntaxError("Info field {0} has the wrong "\
-                    "number of entrys according to the vcf header".format(
-                        '='.join([info, ','.join(annotation)])
-                    ))
-            elif number == 'R':
-                if len(annotation) != (len(alternatives) + 1):
-                    raise SyntaxError("Info field {0} has the wrong "\
-                    "number of entrys according to the vcf header".format(
-                        '='.join([info, ','.join(annotation)])
-                    ))
-            elif number == 'G':
-                if len(annotation) != len(individuals):
-                    raise SyntaxError("Info field {0} has the wrong "\
-                    "number of entrys according to the vcf header".format(
-                        '='.join([info, ','.join(annotation)])
-                    ))
+                elif number == 'R':
+                    if len(annotation) != (len(alternatives) + 1):
+                        raise SyntaxError("Info field {0} has the wrong "\
+                        "number of entrys according to the vcf header".format(
+                            '='.join([info, ','.join(annotation)])
+                        ))
+                elif number == 'G':
+                    if len(annotation) != len(individuals):
+                        raise SyntaxError("Info field {0} has the wrong "\
+                        "number of entrys according to the vcf header".format(
+                            '='.join([info, ','.join(annotation)])
+                        ))
                         
                         
                 

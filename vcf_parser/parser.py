@@ -86,7 +86,7 @@ from vcf_parser.utils import (format_variant, split_variants)
 
 class VCFParser(object):
     """docstring for VCFParser"""
-    def __init__(self, infile=None, fsock=None, split_variants=False):
+    def __init__(self, infile=None, fsock=None, split_variants=False, skip_info_check=False):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
@@ -95,6 +95,9 @@ class VCFParser(object):
         self.fsock = fsock
         self.split_variants = split_variants
         self.logger.info("Split variants = {0}".format(self.split_variants))
+        
+        self.skip_info_check = skip_info_check
+        self.logger.info("Skip info check = {0}".format(self.skip_info_check))
         
         self.logger.info("Initializing HeaderParser")
         self.metadata = HeaderParser()
@@ -132,7 +135,6 @@ class VCFParser(object):
             self.next_line = self.vcf.readline().rstrip()
             self.current_line = self.next_line
             self.metadata.parse_meta_data(self.next_line)
-            self.beginning = True
             
             while self.next_line.startswith('#'):
                 if self.next_line.startswith('##'):
@@ -141,6 +143,7 @@ class VCFParser(object):
                     self.metadata.parse_header_line(self.next_line)
                 self.next_line = self.vcf.readline().rstrip()
             
+            self.vcf.seek(0)
             self.individuals = self.metadata.individuals
             self.header = self.metadata.header
             self.vep_header = self.metadata.vep_columns
@@ -156,7 +159,7 @@ class VCFParser(object):
             variant_info.append(individual)
         
         variant_line = '\t'.join(variant_info)
-        variant = format_variant(variant_line, self.metadata)
+        variant = format_variant(variant_line, self.metadata, self.skip_info_check)
         
         if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
             self.variants.append(variant)
@@ -169,6 +172,7 @@ class VCFParser(object):
         
         
     def __iter__(self):
+        
         if not self.metadata.fileformat:
             raise SyntaxError("Vcf must have fileformat defined")
         
@@ -179,24 +183,10 @@ class VCFParser(object):
                 # If there are multiple alternatives and self.split_variants
                 # There can be more than one variant in one line
                 variants = []
-                if self.beginning:
-                    first_variant = format_variant(
-                        self.next_line, self.metadata
-                    )
-                    # If only one alternative or NOT split_variants we use only this variant
-                    if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
-                        variants.append(first_variant)
-                        
-                    # If multiple alternative and split_variants we must split the variant                 
-                    else:
-                        for variant in split_variants(first_variant, self.metadata):
-                            variants.append(variant)
-                    
-                    self.beginning = False
                 
-                if len(line.split('\t')) >= 8:
-                    
-                    variant = format_variant(line, self.metadata)
+                if not line.startswith('#') and len(line.split('\t')) >= 8:
+                    variant = format_variant(line, self.metadata, 
+                                self.skip_info_check)
                     
                     if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
                         variants.append(variant)
@@ -207,6 +197,7 @@ class VCFParser(object):
                 
                 for variant in variants:
                     yield variant
+        
         else:
             for variant in self.variants:
                 yield variant
@@ -243,18 +234,19 @@ def cli(variant_file, vep, split):
             parser - 
     """
     from datetime import datetime
+    from pprint import pprint as pp
     if variant_file == '-':
         my_parser = VCFParser(fsock=sys.stdin, split_variants=split)
     else:
         my_parser = VCFParser(infile = variant_file, split_variants=split)
     start = datetime.now()
     nr_of_variants = 0
-    # for line in my_parser.metadata.print_header():
-    #     print(line)
+    for line in my_parser.metadata.print_header():
+        print(line)
     for variant in my_parser:
         pp(variant)
         nr_of_variants += 1
-    # print('Number of variants: %s' % nr_of_variants)
+    print('Number of variants: %s' % nr_of_variants)
     # print('Time to parse: %s' % str(datetime.now()-start))
     # pp(my_parser.metadata.extra_info)
     

@@ -63,6 +63,65 @@ def test_vcf_parser():
     
     first_variant = variants[0]
     assert first_variant['POS'] == '11900'
+    
+    second_variant = variants[1]
+    assert second_variant['POS'] == '879585'
+    
+    last_variant = variants[-1]
+    assert last_variant['POS'] == '973348'
+
+def test_one_variant():
+    """
+    Test the vcf_parser
+    """
+    vcf_lines = [
+        '##fileformat=VCFv4.1\n',
+        '##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">\n',
+        '##contig=<ID=1,length=249250621,assembly=b37>\n',
+        '##reference=file:///humgen/gsa-hpprojects/GATK/bundle'\
+        '/current/b37/human_g1k_v37.fasta\n',
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t'\
+        'father\tmother\tproband\n',
+        '1\t11900\t.\tA\tT\t100\tPASS\tMQ=1\tGT:GQ\t0/1:60\t0/1:60\t1/1:60\n',
+        ]
+    
+    vcf_file = get_vcf_file(vcf_lines)
+    variants = []
+    for variant in VCFParser(infile=vcf_file):
+        variants.append(variant)
+    
+    first_variant = variants[0]
+    assert first_variant['POS'] == '11900'
+    assert first_variant['ALT'] == 'T'
+    
+
+def test_split_variant():
+    """
+    Test the vcf_parser
+    """
+    vcf_lines = [
+        '##fileformat=VCFv4.1\n',
+        '##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">\n',
+        '##contig=<ID=1,length=249250621,assembly=b37>\n',
+        '##reference=file:///humgen/gsa-hpprojects/GATK/bundle'\
+        '/current/b37/human_g1k_v37.fasta\n',
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t'\
+        'father\tmother\tproband\n',
+        '1\t11900\t.\tA\tT,C\t100\tPASS\tMQ=1\tGT:GQ\t0/1:60\t0/2:60\t1/2:60\n',
+        ]
+    
+    vcf_file = get_vcf_file(vcf_lines)
+    variants = []
+    for variant in VCFParser(infile=vcf_file, split_variants=True):
+        variants.append(variant)
+    
+    first_variant = variants[0]
+    assert first_variant['POS'] == '11900'
+    assert first_variant['ALT'] == 'T'
+    
+    second_variant = variants[1]
+    assert second_variant['POS'] == '11900'
+    assert second_variant['ALT'] == 'C'
 
 
 def test_wrong_formatted_vcf():

@@ -67,6 +67,10 @@ def print_version(ctx, param, value):
                 is_flag=True,
                 help='Do not print vcf data.'
 )
+@click.option('--skip_info_check', 
+                is_flag=True,
+                help='Skip to check if info fields are correct for all variants.'
+)
 @click.option('--version',
                 is_flag=True,
                 callback=print_version,
@@ -83,23 +87,31 @@ def print_version(ctx, param, value):
                                         'CRITICAL']),
                     help="Set the level of log output."
 )
-def cli(variant_file, vep, split, outfile, verbose, silent, logfile, loglevel):
-    """Tool for parsing vcf files.\n
-        Prints the vcf file to output. If --split/-s is used all multiallelic calls will be splitted and printed as single variant calls.
-        For more information, please see github.com/moonso/vcf_parser.
+def cli(variant_file, vep, split, outfile, verbose, silent, skip_info_check,
+        logfile, loglevel):
+    """
+    Tool for parsing vcf files.
+    
+    Prints the vcf file to output. 
+    If --split/-s is used all multiallelic calls will be splitted and printed 
+    as single variant calls.
+    For more information, please see github.com/moonso/vcf_parser.
     """
     from vcf_parser import logger, init_log
     if not loglevel:
         if verbose:
             loglevel = 'INFO'
+    
     init_log(logger, logfile, loglevel)
     
     if variant_file == '-':
         logger.info("Start parsing variants from stdin")
-        my_parser = vcf_parser.VCFParser(fsock=sys.stdin, split_variants=split)
+        my_parser = vcf_parser.VCFParser(fsock=sys.stdin, split_variants=split, 
+                                            skip_info_check=skip_info_check)
     else:
         logger.info("Start parsing variants from file {0}".format(variant_file))
-        my_parser = vcf_parser.VCFParser(infile = variant_file, split_variants=split)
+        my_parser = vcf_parser.VCFParser(infile = variant_file, 
+        split_variants=split, skip_info_check=skip_info_check)
     
     start = datetime.now()
     nr_of_variants = 0
