@@ -1,4 +1,7 @@
-#VCF Parser#
+# VCF Parser #
+
+[![Build Status](https://travis-ci.org/moonso/vcf_parser.svg)](https://travis-ci.org/moonso/vcf_parser)
+
 Small library for parsing vcf files. Based on [PyVCF](https://github.com/jamescasbon/PyVCF)
 
 **vcf_parser can split multi allelic calls in vcf now.**

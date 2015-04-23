@@ -16,17 +16,12 @@ import os
 import click
 
 from pprint import pprint as pp
+from datetime import datetime
+from pkg_resources import require
 
-from codecs import getwriter
-
-import pkg_resources
 import vcf_parser
-from vcf_parser import VCFParser
 
-if sys.version_info < (3,0):
-    sys.stdout = getwriter('UTF-8')(sys.stdout)
-
-version = pkg_resources.require("vcf_parser")[0].version
+version = require("vcf_parser")[0].version
 
 
 def print_version(ctx, param, value):
@@ -62,11 +57,19 @@ def print_version(ctx, param, value):
 )
 @click.option('-o', '--outfile', 
                     type=click.Path(exists=False),
-                    help='Specify the path to a file where results should be stored.'
+                    help='Path to a outfile.'
 )
 @click.option('-v', '--verbose', 
                 is_flag=True,
                 help='Increase output verbosity.'
+)
+@click.option('--silent', 
+                is_flag=True,
+                help='Do not print vcf data.'
+)
+@click.option('--skip_info_check', 
+                is_flag=True,
+                help='Skip to check if info fields are correct for all variants.'
 )
 @click.option('--version',
                 is_flag=True,
@@ -74,19 +77,46 @@ def print_version(ctx, param, value):
                 expose_value=False,
                 is_eager=True
 )
-def vcf_parser(variant_file, vep, split, outfile, verbose):
-    """Tool for parsing vcf files.\n
-        Prints the vcf file to output. If --split/-s is used all multiallelic calls will be splitted and printed as single variant calls.
-        For more information, please see github.com/moonso/vcf_parser.
+@click.option('-l', '--logfile',
+                    type=click.Path(exists=False),
+                    help="Path to log file. If none logging is "\
+                          "printed to stderr."
+)
+@click.option('--loglevel',
+                    type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 
+                                        'CRITICAL']),
+                    help="Set the level of log output."
+)
+def cli(variant_file, vep, split, outfile, verbose, silent, skip_info_check,
+        logfile, loglevel):
     """
-    from datetime import datetime
+    Tool for parsing vcf files.
+    
+    Prints the vcf file to output. 
+    If --split/-s is used all multiallelic calls will be splitted and printed 
+    as single variant calls.
+    For more information, please see github.com/moonso/vcf_parser.
+    """
+    from vcf_parser import logger, init_log
+    if not loglevel:
+        if verbose:
+            loglevel = 'INFO'
+    
+    init_log(logger, logfile, loglevel)
+    
     if variant_file == '-':
-        my_parser = VCFParser(fsock=sys.stdin, split_variants=split)
+        logger.info("Start parsing variants from stdin")
+        my_parser = vcf_parser.VCFParser(fsock=sys.stdin, split_variants=split, 
+                                            skip_info_check=skip_info_check)
     else:
-        my_parser = VCFParser(infile = variant_file, split_variants=split)
+        logger.info("Start parsing variants from file {0}".format(variant_file))
+        my_parser = vcf_parser.VCFParser(infile = variant_file, 
+        split_variants=split, skip_info_check=skip_info_check)
+    
     start = datetime.now()
     nr_of_variants = 0
     if outfile:
+        logger.info("Printing vcf to file {0}".format(outfile))
         with open(outfile, 'w', encoding='utf-8') as f:
             for line in my_parser.metadata.print_header():
                 f.write(line+'\n')
@@ -94,15 +124,18 @@ def vcf_parser(variant_file, vep, split, outfile, verbose):
                 f.write('\t'.join([variant[head] for head in my_parser.header])+'\n')
                 nr_of_variants += 1
     else:
+        logger.info("Printing vcf to stdout")
         for line in my_parser.metadata.print_header():
-            print(line)
+            if not silent:
+                print(line)
         for variant in my_parser:
-            print('\t'.join([variant[head] for head in my_parser.header]))        
+            if not silent:
+                print('\t'.join([variant[head] for head in my_parser.header]))        
             nr_of_variants += 1
-    if verbose:
-        print('Number of variants: %s' % nr_of_variants)
-        print('Time to parse file: %s' % str(datetime.now() - start))
+    
+    logger.info('Number of variants: {0}'.format(nr_of_variants))
+    logger.info('Time to parse file: {0}'.format(str(datetime.now() - start)))
     
 
 if __name__ == '__main__':
-    vcf_parser()
+    cli()
