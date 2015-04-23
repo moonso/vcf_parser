@@ -86,7 +86,8 @@ from vcf_parser.utils import (format_variant, split_variants)
 
 class VCFParser(object):
     """docstring for VCFParser"""
-    def __init__(self, infile=None, fsock=None, split_variants=False, skip_info_check=False):
+    def __init__(self, infile=None, fsock=None, split_variants=False, 
+                skip_info_check=False, allele_symbol='0'):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
@@ -99,6 +100,9 @@ class VCFParser(object):
         
         self.skip_info_check = skip_info_check
         self.logger.info("Skip info check = {0}".format(self.skip_info_check))
+
+        self.allele_symbol = allele_symbol
+        self.logger.info("Allele symbol = {0}".format(self.allele_symbol))
         
         self.logger.info("Initializing HeaderParser")
         self.metadata = HeaderParser()
@@ -166,7 +170,8 @@ class VCFParser(object):
             
         # If multiple alternative and split_variants we must split the variant                 
         else:
-            for splitted_variant in split_variants(variant, self.metadata):
+            for splitted_variant in split_variants(variant_dict=variant, 
+            header_parser=self.metadata, allele_symbol=self.allele_symbol):
                 self.variants.append(splitted_variant)
         
         
@@ -185,7 +190,8 @@ class VCFParser(object):
                 if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
                     variants.append(first_variant)
                 else:
-                    for splitted_variant in split_variants(first_variant, self.metadata):
+                    for splitted_variant in split_variants(variant_dict=first_variant, 
+                    header_parser=self.metadata, allele_symbol=self.allele_symbol):
                         variants.append(splitted_variant)
                 
                 for variant in variants:
@@ -208,7 +214,10 @@ class VCFParser(object):
                         variants.append(variant)
                     
                     else:
-                        for splitted_variant in split_variants(variant, self.metadata):
+                        for splitted_variant in split_variants(
+                                    variant_dict=variant, 
+                                    header_parser=self.metadata, 
+                                    allele_symbol=self.allele_symbol):
                             variants.append(splitted_variant)
                 
                 for variant in variants:
