@@ -91,6 +91,7 @@ class VCFParser(object):
         self.logger = logging.getLogger(__name__)
         
         self.vcf = None
+        self.beginning = True
         self.infile = infile
         self.fsock = fsock
         self.split_variants = split_variants
@@ -143,7 +144,6 @@ class VCFParser(object):
                     self.metadata.parse_header_line(self.next_line)
                 self.next_line = self.vcf.readline().rstrip()
             
-            self.vcf.seek(0)
             self.individuals = self.metadata.individuals
             self.header = self.metadata.header
             self.vep_header = self.metadata.vep_columns
@@ -177,6 +177,22 @@ class VCFParser(object):
             raise SyntaxError("Vcf must have fileformat defined")
         
         if self.vcf:
+            
+            if self.beginning:
+                variants = []
+                first_variant = format_variant(self.next_line, self.metadata)
+                
+                if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
+                    variants.append(first_variant)
+                else:
+                    for splitted_variant in split_variants(first_variant, self.metadata):
+                        variants.append(splitted_variant)
+                
+                for variant in variants:
+                    yield variant
+                
+                self.beginning = False                
+            
             for line in self.vcf:
                 line = line.rstrip()
                 # These are the variant(s) found in one line of the vcf
