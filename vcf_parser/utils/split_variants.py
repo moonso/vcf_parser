@@ -12,7 +12,7 @@ else:
 from vcf_parser import Genotype
 from vcf_parser.utils import (build_vep_string, split_genotype, build_info_string)
 
-def split_variants(variant_dict, header_parser):
+def split_variants(variant_dict, header_parser, allele_symbol='0'):
     """
     Checks if there are multiple alternative alleles and splitts the 
     variant.
@@ -26,7 +26,8 @@ def split_variants(variant_dict, header_parser):
         variant: A variant dictionary with the splitted information for each
                 alternative
     """
-    
+    logger = getLogger(__name__)
+    logger.info("Allele symbol {0}".format(allele_symbol))
     alternatives = variant_dict['ALT'].split(',')
     reference = variant_dict['REF']
     number_of_values = 1
@@ -102,7 +103,8 @@ def split_variants(variant_dict, header_parser):
             new_genotype = split_genotype(
                             variant_dict[individual], 
                             variant['FORMAT'], 
-                            alternative_number
+                            alternative_number, 
+                            allele_symbol
                         )
             
             variant[individual] = new_genotype
