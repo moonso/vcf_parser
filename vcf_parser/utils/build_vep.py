@@ -75,7 +75,8 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     logger = getLogger(__name__)
 
     vep_dict = {'gene_ids' : set([])}
-
+    
+        
     # If we have several alternatives we need to check what types of 
     # alternatives we have
     vep_to_vcf = {}
@@ -103,8 +104,15 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
 
     for vep_annotation in csq_info:
         logger.debug("Parsing vep annotation: {0}".format(vep_annotation))
+        splitted_vep = vep_annotation.split('|')
+        
+        if len(splitted_vep) != len(vep_columns):
+            raise SyntaxError("Csq info for variant does not match csq info in "\
+        "header. {0}, {1}".format(
+            '|'.join(splitted_vep), '|'.join(vep_columns)))
+        
         # Build the vep dict:
-        vep_info = dict(zip(vep_columns, vep_annotation.split('|')))
+        vep_info = dict(zip(vep_columns, splitted_vep))
         
         # If no allele is found we can not determine what allele
         if vep_info.get('Allele', None):

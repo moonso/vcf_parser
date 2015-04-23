@@ -5,7 +5,24 @@ from vcf_parser import Genotype
 from vcf_parser.utils import (build_info_dict, build_vep_annotation, 
 build_compounds_dict, build_rank_score_dict)
 
-def format_variant(line, vcf_header, vep_header = []):
+def is_number(s):
+    """
+    Take a string and determin if it is a number
+    
+    Arguments:
+        s (str): A string
+    
+    Returns:
+        bool: True if it is a number, False otherwise
+    """
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+    
+
+def format_variant(line, header_parser):
     """
     Yield the variant in the right format. 
     
@@ -23,8 +40,10 @@ def format_variant(line, vcf_header, vep_header = []):
     logger = getLogger(__name__)
     
     individuals = []
-    if len(vcf_header) > 9:
-        individuals = vcf_header[9:]
+    
+    vcf_header = header_parser.header
+    
+    individuals = header_parser.individuals
     
     variant_line = line.rstrip().split('\t')
     
@@ -51,17 +70,59 @@ def format_variant(line, vcf_header, vep_header = []):
     
     alternatives = variant['ALT'].split(',')
     
-    info_dict = build_info_dict(variant.get('INFO', '')) 
+    info_dict = build_info_dict(variant.get('INFO', ''))
+    
+    # Check that the entry is on the proper format_
+    for info in info_dict:
+        annotation = info_dict[info]
+        extra_info = header_parser.extra_info.get(info, None)
+        if not extra_info:
+            logger.warning("The INFO field {0} is not specified in vcf"\
+            " header. {1}".format(info, line))
+        else:
+            number = extra_info['Number']
+            if is_number(number):
+                number_of_entrys = float(number)
+                if number_of_entrys != 0:
+                    if len(annotation) != number_of_entrys:
+                        raise SyntaxError("Info field {0} has the wrong "\
+                        "number of entrys according to the vcf header".format(
+                            '='.join([info, ','.join(annotation)])
+                        ))
+            elif number == 'A':
+                if len(annotation) != len(alternatives):
+                    raise SyntaxError("Info field {0} has the wrong "\
+                    "number of entrys according to the vcf header".format(
+                        '='.join([info, ','.join(annotation)])
+                    ))
+            elif number == 'R':
+                if len(annotation) != (len(alternatives) + 1):
+                    raise SyntaxError("Info field {0} has the wrong "\
+                    "number of entrys according to the vcf header".format(
+                        '='.join([info, ','.join(annotation)])
+                    ))
+            elif number == 'G':
+                if len(annotation) != len(individuals):
+                    raise SyntaxError("Info field {0} has the wrong "\
+                    "number of entrys according to the vcf header".format(
+                        '='.join([info, ','.join(annotation)])
+                    ))
+                        
+                        
+                
+        
     
     variant['info_dict'] = info_dict
     #################### Some fields require special parsing ###########################
     
     ##### VEP ANNOTATIONS #####
     if 'CSQ' in info_dict:
+        vep_columns = header_parser.vep_columns
         variant['vep_info'] = build_vep_annotation(
                     info_dict['CSQ'], 
                     variant['REF'], 
-                    alternatives
+                    alternatives,
+                    vep_columns
                 )
     
     ##### GENMOD ANNOTATIONS #####

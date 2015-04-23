@@ -1,4 +1,5 @@
 from vcf_parser.utils import build_vep_annotation
+import pytest
 
 def test_build_vep_dict():
     """
@@ -21,6 +22,22 @@ def test_build_vep_dict():
                             }]
 
     assert vep_dict['gene_ids'] == set(['-'])
+
+
+def test_wrong_formated_vep_annotation():
+    """
+    Test how the build_vep_dict behaves
+    """
+    vep_headers = ["Position", "Type", "Allele"]
+    annotation = ["1|nonsynonymous"]
+    
+    with pytest.raises(SyntaxError):
+        vep_dict = build_vep_annotation(
+            csq_info=annotation, 
+            reference='A', 
+            alternatives=['C'], 
+            vep_columns=vep_headers
+            )
 
 def test_build_multiple_string():
     """

@@ -90,6 +90,7 @@ class VCFParser(object):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
+        self.vcf = None
         self.infile = infile
         self.fsock = fsock
         self.split_variants = split_variants
@@ -97,88 +98,117 @@ class VCFParser(object):
         
         self.logger.info("Initializing HeaderParser")
         self.metadata = HeaderParser()
-        
-        # If there are no file or stream the user can add variants manually.
-        # These will be added to self.variants
-        self.variants = []
-        
-        if not (fsock or infile):
-            raise IOError('You must provide at least fsock or filename')
-        
-        if fsock:
-            if not infile and hasattr(fsock, 'name'):
-                if sys.version_info < (3, 0):
-                    self.logger.info("Using codecs to read stdin")
-                    sys.stdin = getreader('utf-8')(fsock)
-                
-                self.logger.info("Reading vcf form stdin")
-                self.vcf = sys.stdin
-        
-        else:
-            file_name, file_extension = os.path.splitext(infile)
-            if file_extension == '.gz':
-                self.vcf = getreader('utf-8')(gzip.open(infile), errors='replace')
-            elif file_extension == '.vcf':
-                self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
-            else:
-                raise IOError("File is not in a supported format!\n"
-                                    " Or use correct ending(.vcf or .vcf.gz)")
-        
         # These are the individuals described in the header
         self.individuals = []
         # This is the header line of the vcf
         self.header = []
         
-        self.next_line = self.vcf.readline().rstrip()
-        self.current_line = self.next_line
-        self.metadata.parse_meta_data(self.next_line)
-        self.beginning = True
+        # If there are no file or stream the user can add variants manually.
+        # These will be added to self.variants
+        self.variants = []
         
-        while self.next_line.startswith('#'):
-            if self.next_line.startswith('##'):
-                self.metadata.parse_meta_data(self.next_line)
-            elif self.next_line.startswith('#'):
-                self.metadata.parse_header_line(self.next_line)
-            self.next_line = self.vcf.readline().rstrip()
+        if (fsock or infile):
         
-        self.individuals = self.metadata.individuals
-        self.header = self.metadata.header
-        self.vep_header = self.metadata.vep_columns
-            
-    def __iter__(self):
-        for line in self.vcf:
-            line = line.rstrip()
-            # These are the variant(s) found in one line of the vcf
-            # If there are multiple alternatives and self.split_variants
-            # There can be more than one variant in one line
-            variants = []
-            if self.beginning:
-                first_variant = format_variant(
-                    next_line, self.individuals, self.header, self.vep_header
-                )
-                # If only one alternative or NOT split_variants we use only this variant
-                if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
-                    variants.append(first_variant)
+            if fsock:
+                if not infile and hasattr(fsock, 'name'):
+                    if sys.version_info < (3, 0):
+                        self.logger.info("Using codecs to read stdin")
+                        sys.stdin = getreader('utf-8')(fsock)
                     
-                # If multiple alternative and split_variants we must split the variant                 
+                    self.logger.info("Reading vcf form stdin")
+                    self.vcf = sys.stdin
+            
+            else:
+                file_name, file_extension = os.path.splitext(infile)
+                if file_extension == '.gz':
+                    self.vcf = getreader('utf-8')(gzip.open(infile), errors='replace')
+                elif file_extension == '.vcf':
+                    self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
                 else:
-                    for variant in split_variants(first_variant, self.metadata):
+                    raise IOError("File is not in a supported format!\n"
+                                        " Or use correct ending(.vcf or .vcf.gz)")
+            
+            
+            self.next_line = self.vcf.readline().rstrip()
+            self.current_line = self.next_line
+            self.metadata.parse_meta_data(self.next_line)
+            self.beginning = True
+            
+            while self.next_line.startswith('#'):
+                if self.next_line.startswith('##'):
+                    self.metadata.parse_meta_data(self.next_line)
+                elif self.next_line.startswith('#'):
+                    self.metadata.parse_header_line(self.next_line)
+                self.next_line = self.vcf.readline().rstrip()
+            
+            self.individuals = self.metadata.individuals
+            self.header = self.metadata.header
+            self.vep_header = self.metadata.vep_columns
+    
+    def add_variant(self, chrom, pos, rs_id, ref, alt, qual, filt, info, form=None, genotypes=[]):
+        """
+        Add a variant to the parser
+        """
+        variant_info = [chrom, pos, rs_id, ref, alt, qual, filt, info]
+        if form:
+            variant_info.append(form)
+        for individual in genotypes:
+            variant_info.append(individual)
+        
+        variant_line = '\t'.join(variant_info)
+        variant = format_variant(variant_line, self.metadata)
+        
+        if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
+            self.variants.append(variant)
+            
+        # If multiple alternative and split_variants we must split the variant                 
+        else:
+            for splitted_variant in split_variants(variant, self.metadata):
+                self.variants.append(splitted_variant)
+        
+        
+        
+    def __iter__(self):
+        if not self.metadata.fileformat:
+            raise SyntaxError("Vcf must have fileformat defined")
+        
+        if self.vcf:
+            for line in self.vcf:
+                line = line.rstrip()
+                # These are the variant(s) found in one line of the vcf
+                # If there are multiple alternatives and self.split_variants
+                # There can be more than one variant in one line
+                variants = []
+                if self.beginning:
+                    first_variant = format_variant(
+                        self.next_line, self.metadata
+                    )
+                    # If only one alternative or NOT split_variants we use only this variant
+                    if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
+                        variants.append(first_variant)
+                        
+                    # If multiple alternative and split_variants we must split the variant                 
+                    else:
+                        for variant in split_variants(first_variant, self.metadata):
+                            variants.append(variant)
+                    
+                    self.beginning = False
+                
+                if len(line.split('\t')) >= 8:
+                    
+                    variant = format_variant(line, self.metadata)
+                    
+                    if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
                         variants.append(variant)
+                    
+                    else:
+                        for splitted_variant in split_variants(variant, self.metadata):
+                            variants.append(splitted_variant)
                 
-                self.beginning = False
-            
-            if len(line.split('\t')) >= 8:
-                
-                variant = format_variant(line)
-                
-                if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
-                    variants.append(variant)
-                
-                else:
-                    for splitted_variant in split_variants(variant, self.metadata):
-                        variants.append(splitted_variant)
-            
-            for variant in variants:
+                for variant in variants:
+                    yield variant
+        else:
+            for variant in self.variants:
                 yield variant
 
 

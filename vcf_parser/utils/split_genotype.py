@@ -70,7 +70,10 @@ def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0')
             ad = []
             # The reference depth will allways be the original depth now
             ad.append(genotype_info.split(',')[0])
-            ad.append(genotype_info.split(',')[alternative_number+1])
+            try:
+                ad.append(genotype_info.split(',')[alternative_number+1])
+            except IndexError:
+                ad.append('0')
             new_genotype.append(','.join(ad))
         elif gt_info == 'DP':
             new_genotype.append(genotype_info)

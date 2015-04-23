@@ -5,3 +5,4 @@ from vcf_parser.utils.build_models import build_models_dict
 from vcf_parser.utils.build_vep import (build_vep_string, build_vep_annotation)
 from vcf_parser.utils.split_genotype import split_genotype
 from vcf_parser.utils.format_variant import format_variant
+from vcf_parser.utils.split_variants import split_variants

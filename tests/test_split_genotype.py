@@ -15,9 +15,23 @@ def test_simple_split():
     assert first_genotype == "0/1:30"
     assert second_genotype == "0/1:30"
     assert third_genotype == "0/0:30"
+
+def test_simple_split_ad():
+    """
+    Test how split_genotype behaves with allele depth
+    """
     
+    genotype = "1/2:30:0,10,20"
+    gt_format = "GT:DP:AD"
     
-    # genotype, gt_format, alternative_number, allele_symbol = '0'
+    first_genotype = split_genotype(genotype, gt_format, 0)
+    second_genotype = split_genotype(genotype, gt_format, 1)
+    third_genotype = split_genotype(genotype, gt_format, 2)
+    
+    assert first_genotype == "0/1:30:0,10"
+    assert second_genotype == "0/1:30:0,20"
+    assert third_genotype == "0/0:30:0,0"
+
 
 def test_other_allele_symbol():
     """

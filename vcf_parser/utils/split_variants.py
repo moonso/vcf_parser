@@ -9,9 +9,10 @@ if sys.version_info < (2, 7):
 else:
     from collections import OrderedDict
 
-from vcf_parser.utils import build_vep_string, split_genotype
+from vcf_parser import Genotype
+from vcf_parser.utils import (build_vep_string, split_genotype, build_info_string)
 
-def split_variants(variant_dict, metadata=None):
+def split_variants(variant_dict, header_parser):
     """
     Checks if there are multiple alternative alleles and splitts the 
     variant.
@@ -52,18 +53,13 @@ def split_variants(variant_dict, metadata=None):
         
 
         if 'FORMAT' in variant_dict:
-            variant['FORMAT'] = variant_dict['FORMAT']
+            gt_format = variant_dict['FORMAT']
+            variant['FORMAT'] = gt_format
 
         for info in variant_dict['info_dict']:
             if info:
                 # Check if the info field have one entry per allele:
-                if metadata:
-                    try:
-                        number_of_values = metadata.extra_info[info]['Number']
-                    except KeyError:
-                        logger.error("One of the FILTER lines is missing in vcf"\
-                                "header: {0}".format(info))
-                        raise
+                number_of_values = header_parser.extra_info[info]['Number']
                 
                 if info == 'CSQ':
                     try:

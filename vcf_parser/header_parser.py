@@ -43,7 +43,7 @@ class HeaderParser(object):
                             'filt' : ['ID', 'Description'],
                             'alt' : ['ID', 'Description'],
                             'contig' : ['ID', 'length']}
-        self.fileformat = ''
+        self.fileformat = None
         self.line_counter = 0
         self.individuals = []
         self.vep_columns = []
@@ -82,7 +82,11 @@ class HeaderParser(object):
         match = False
         
         if line_info[0] == 'fileformat':
-            self.fileformat = line_info[1]
+            try:
+                self.fileformat = line_info[1]
+            except IndexError:
+                raise SyntaxError("fileformat must have a value")
+        
         elif line_info[0] == 'INFO':
             match = self.info_pattern.match(line)
             if not match:
@@ -207,7 +211,18 @@ class HeaderParser(object):
         info_line = '##INFO=<ID={0},Number={1},Type={2},Description="{3}">'.format(
             info_id, number, entry_type, description
         )
-        self.info_dict[info_id] = info_line
+        self.parse_meta_data(info_line)
+        return
+
+    def add_fileformat(self, fileformat):
+        """
+        Add fileformat line to the header.
+        
+        Arguments:
+            fileformat (str): The id of the info line
+        
+        """
+        self.fileformat = fileformat
         return
 
     def add_version_tracking(self, info_id, version, date, command_line=''):

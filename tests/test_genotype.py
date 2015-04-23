@@ -41,6 +41,18 @@ def test_nocall():
     assert not my_nocall.has_variant
     assert not my_nocall.genotyped
 
+def test_haploid_genotype():
+    """
+    Test how genotype behaves with haploid call
+    """
+    haploid_call = Genotype(**{'GT':'1'})
+    assert haploid_call.genotype == '1/.'
+    # assert not haploid_call.heterozygote
+    # assert not haploid_call.homo_ref
+    # assert haploid_call.homo_alt
+    # assert haploid_call.has_variant
+    # assert haploid_call.genotyped
+
 def test_genotype_0_1():
     """
     A normal heterozygote call, has_variant and heterozygote is true.
@@ -121,10 +133,3 @@ def test_phased_data():
     assert my_genotype.phased
 
     
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
-
