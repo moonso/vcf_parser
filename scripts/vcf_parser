@@ -128,7 +128,10 @@ def cli(variant_file, vep, split, outfile, verbose, silent, skip_info_check,
                 f.write('\t'.join([variant[head] for head in my_parser.header])+'\n')
                 nr_of_variants += 1
     else:
-        logger.info("Printing vcf to stdout")
+        if not silent:
+            logger.info("Printing vcf to stdout")
+        else:
+            logger.info("Skip printing since silent is active")
         for line in my_parser.metadata.print_header():
             if not silent:
                 print(line)

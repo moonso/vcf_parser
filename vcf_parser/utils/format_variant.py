@@ -3,7 +3,7 @@ from logging import getLogger
 
 from vcf_parser import Genotype
 from vcf_parser.utils import (build_info_dict, build_vep_annotation, 
-build_compounds_dict, build_rank_score_dict)
+build_compounds_dict, build_rank_score_dict, build_models_dict)
 
 def is_number(s):
     """
@@ -38,23 +38,23 @@ def format_variant(line, header_parser, skip_info_check=False):
                         and how many alternatives there are
     """
     logger = getLogger(__name__)
-    
+
     individuals = []
-    
+
     vcf_header = header_parser.header
-    
+
     individuals = header_parser.individuals
-    
+
     variant_line = line.rstrip().split('\t')
-    
+
     logger.debug("Checking if variant line is malformed")
     if len(vcf_header) != len(variant_line):
         raise SyntaxError("One of the variant lines is malformed: {0}".format(
             line
         ))
-    
+
     variant = dict(zip(vcf_header, variant_line))
-    
+
     # A dictionary with the vep information
     variant['vep_info'] = {}
     # A dictionary with the genetic models (family ids as keys)
@@ -87,14 +87,18 @@ def format_variant(line, header_parser, skip_info_check=False):
                     if number_of_entrys != 0:
                         if len(annotation) != number_of_entrys:
                             raise SyntaxError("Info field {0} has the wrong "\
-                            "number of entrys according to the vcf header".format(
-                                '='.join([info, ','.join(annotation)])
+                            "number of entrys according to the vcf header."\
+                            "Vcf header line: {1}".format(
+                                '='.join([info, ','.join(annotation)]), 
+                                header_parser.extra_info.get(info, None)
                             ))
                 elif number == 'A':
                     if len(annotation) != len(alternatives):
                         raise SyntaxError("Info field {0} has the wrong "\
-                        "number of entrys according to the vcf header".format(
-                            '='.join([info, ','.join(annotation)])
+                        "number of entrys according to the vcf header"\
+                        "Vcf header line: {1}".format(
+                            '='.join([info, ','.join(annotation)]),
+                            header_parser.extra_info.get(info, None)
                         ))
                 elif number == 'R':
                     if len(annotation) != (len(alternatives) + 1):
