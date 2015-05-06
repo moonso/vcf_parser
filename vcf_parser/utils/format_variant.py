@@ -38,26 +38,23 @@ def format_variant(line, header_parser, skip_info_check=False):
                         and how many alternatives there are
     """
     logger = getLogger(__name__)
-    
+
     individuals = []
-    
+
     vcf_header = header_parser.header
-    
+
     individuals = header_parser.individuals
-    
+
     variant_line = line.rstrip().split('\t')
-    
-    print("Skip info check", skip_info_check)
-    print(line)
-    
+
     logger.debug("Checking if variant line is malformed")
     if len(vcf_header) != len(variant_line):
         raise SyntaxError("One of the variant lines is malformed: {0}".format(
             line
         ))
-    
+
     variant = dict(zip(vcf_header, variant_line))
-    
+
     # A dictionary with the vep information
     variant['vep_info'] = {}
     # A dictionary with the genetic models (family ids as keys)
