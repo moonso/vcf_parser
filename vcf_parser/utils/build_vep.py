@@ -47,11 +47,11 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     
     If there are several alternatives:
         
-        Insertion: vep represents the alternative by removing the first 
+        Insertion: 
+        vep represents the alternative by removing the first 
         base from the vcf alternative(Like above).
         
-        Deletion: If there is only one deletion among the alternatives it 
-        will allways be represented with '-'.
+        Deletion: 
         If there are multiple alternative deletions vep represents them by 
         removing the first base from the vcf alternative.
         If the vcf line looks like:
@@ -75,8 +75,7 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     logger = getLogger(__name__)
 
     vep_dict = {'gene_ids' : set([])}
-    
-        
+
     # If we have several alternatives we need to check what types of 
     # alternatives we have
     vep_to_vcf = {}
@@ -84,7 +83,7 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     for alternative in alternatives:
         if len(alternative) < len(reference):
             number_of_deletions += 1
-    
+
     logger.debug("Number of deletions found: {0}".format(number_of_deletions))
     for alternative in alternatives:
         # We store the annotations with keys from the vcf alternatives
@@ -94,13 +93,12 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
         if len(alternative) == len(reference):
              vep_to_vcf[alternative] = alternative
         # If deletion alternative is shorter that the reference
-        elif len(alternative) < len(reference):
-            if number_of_deletions > 1:
-                vep_to_vcf[alternative[1:]] = alternative
-            else:
+        else:
+            # If there is a deletion then the alternative will be '-' in vep entry
+            if len(alternative) == 1:
                 vep_to_vcf['-'] = alternative
-        elif len(alternative) > len(reference):
-            vep_to_vcf[alternative[1:]] = alternative
+            else:
+                vep_to_vcf[alternative[1:]] = alternative
 
     for vep_annotation in csq_info:
         logger.debug("Parsing vep annotation: {0}".format(vep_annotation))
@@ -116,7 +114,6 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
         
         # If no allele is found we can not determine what allele
         if vep_info.get('Allele', None):
-            logger.warning("No allele found in vep annotation! Skipping annotation")
             vep_allele = vep_info['Allele']
             vcf_allele = vep_to_vcf[vep_allele]
 
@@ -124,6 +121,9 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
                 vep_dict[vcf_allele].append(vep_info)
             else:
                 vep_dict[vcf_allele] = [vep_info]
+        else:
+            logger.warning("No allele found in vep annotation! Skipping annotation")
+            
 
         # Save the gene annotations for this variant:
         vep_dict['gene_ids'].add(vep_info.get('SYMBOL','-'))
