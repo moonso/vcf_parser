@@ -142,6 +142,37 @@ def test_deletion():
           }
       ]
 
+
+def test_deletion_not_all_bases():
+    """
+    Test how build vep string behaves with a deletion
+    """
+    vep_headers = ["Allele", "Feature_type", "Consequence", "SYMBOL"]
+    annotation = [
+        "TCA|Transcript|inframe_deletion|NOC2L", 
+        "TCA|Transcript|downstream_gene_variant|SAMD11"
+        ]
+    
+    vep_dict = build_vep_annotation(
+        csq_info=annotation, 
+        reference='CTCATCA', 
+        alternatives=['CTCA'], 
+        vep_columns=vep_headers
+        )
+    
+    assert vep_dict['CTCA'] == [
+        {'Allele': 'TCA',
+         'Consequence': 'inframe_deletion',
+         'Feature_type': 'Transcript',
+         'SYMBOL': 'NOC2L'
+         },
+         {'Allele': 'TCA',
+          'Consequence': 'downstream_gene_variant',
+          'Feature_type': 'Transcript',
+          'SYMBOL': 'SAMD11'
+          }
+      ]
+
 def test_one_deletion_and_substitution():
     """
     Test how build vep string behaves with a deletion and substitution on
@@ -156,7 +187,7 @@ def test_one_deletion_and_substitution():
     vep_dict = build_vep_annotation(
         csq_info=annotation, 
         reference='ACC', 
-        alternatives=['ACT', 'AC'], 
+        alternatives=['ACT', 'C'], 
         vep_columns=vep_headers
         )
     
@@ -166,7 +197,7 @@ def test_one_deletion_and_substitution():
          'SYMBOL': 'NOC2L'
          }]
          
-    assert vep_dict['AC'] == [
+    assert vep_dict['C'] == [
         {'Allele': '-',
          'Feature_type': 'Transcript',
          'SYMBOL': 'NOC2L'

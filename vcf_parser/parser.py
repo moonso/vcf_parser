@@ -185,7 +185,7 @@ class VCFParser(object):
             
             if self.beginning:
                 variants = []
-                first_variant = format_variant(self.next_line, self.metadata)
+                first_variant = format_variant(self.next_line, self.metadata, self.skip_info_check)
                 
                 if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
                     variants.append(first_variant)
