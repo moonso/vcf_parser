@@ -1,3 +1,7 @@
+from pkg_resources import require
+
+__version__ = require("vcf_parser")[0].version
+
 from logging import getLogger
 logger = getLogger(__name__)
 
