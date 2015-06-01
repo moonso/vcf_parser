@@ -128,7 +128,7 @@ def format_variant(line, header_parser, skip_info_check=False):
                     variant['REF'], 
                     alternatives,
                     vep_columns
-                )
+                    )
     
     ##### GENMOD ANNOTATIONS #####
     

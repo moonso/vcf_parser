@@ -119,16 +119,18 @@ class VCFParser(object):
         
             if fsock:
                 if not infile and hasattr(fsock, 'name'):
+                    self.logger.info("Reading vcf form stdin")
                     if sys.version_info < (3, 0):
                         self.logger.info("Using codecs to read stdin")
                         sys.stdin = getreader('utf-8')(fsock)
                     
-                    self.logger.info("Reading vcf form stdin")
                     self.vcf = sys.stdin
             
             else:
+                self.logger.info("Reading vcf form file {0}".format(infile))
                 file_name, file_extension = os.path.splitext(infile)
                 if file_extension == '.gz':
+                    self.logger.debug("Vcf is zipped")
                     self.vcf = getreader('utf-8')(gzip.open(infile), errors='replace')
                 elif file_extension == '.vcf':
                     self.vcf = open(infile, mode='r', encoding='utf-8', errors='replace')
@@ -136,9 +138,12 @@ class VCFParser(object):
                     raise IOError("File is not in a supported format!\n"
                                         " Or use correct ending(.vcf or .vcf.gz)")
             
-            
+            self.logger.debug("Reading first line.")
             self.next_line = self.vcf.readline().rstrip()
             self.current_line = self.next_line
+            # First line is allways a metadata line
+            if not self.next_line.startswith('#'):
+                raise IOError("VCF files allways have to start with a metadata line.")
             self.metadata.parse_meta_data(self.next_line)
             
             while self.next_line.startswith('#'):
@@ -149,12 +154,18 @@ class VCFParser(object):
                 self.next_line = self.vcf.readline().rstrip()
             
             self.individuals = self.metadata.individuals
+            self.logger.info("Setting self.individuals to {0}".format(
+                self.individuals
+            ))
             self.header = self.metadata.header
             self.vep_header = self.metadata.vep_columns
     
     def add_variant(self, chrom, pos, rs_id, ref, alt, qual, filt, info, form=None, genotypes=[]):
         """
-        Add a variant to the parser
+        Add a variant to the parser.
+        
+        This function is for building a vcf. It takes the relevant parameters 
+        and make a vcf variant in the proper format.
         """
         variant_info = [chrom, pos, rs_id, ref, alt, qual, filt, info]
         if form:
@@ -170,8 +181,10 @@ class VCFParser(object):
             
         # If multiple alternative and split_variants we must split the variant                 
         else:
-            for splitted_variant in split_variants(variant_dict=variant, 
-            header_parser=self.metadata, allele_symbol=self.allele_symbol):
+            for splitted_variant in split_variants(
+                                                    variant_dict=variant, 
+                                                    header_parser=self.metadata, 
+                                                    allele_symbol=self.allele_symbol):
                 self.variants.append(splitted_variant)
         
         
@@ -190,8 +203,10 @@ class VCFParser(object):
                 if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
                     variants.append(first_variant)
                 else:
-                    for splitted_variant in split_variants(variant_dict=first_variant, 
-                    header_parser=self.metadata, allele_symbol=self.allele_symbol):
+                    for splitted_variant in split_variants(
+                                                            variant_dict=first_variant, 
+                                                            header_parser=self.metadata, 
+                                                            allele_symbol=self.allele_symbol):
                         variants.append(splitted_variant)
                 
                 for variant in variants:
@@ -227,11 +242,6 @@ class VCFParser(object):
             for variant in self.variants:
                 yield variant
 
-
-    def __str__(self):
-        """return the headers header lines to screen."""
-        return '\n'.join(self.metadata.print_header())
-    
     def __repr__(self):
         return "Parser(infile={0},fsock={1},split_variants={2})".format(
             self.infile, self.fsock, self.split_variants
