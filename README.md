@@ -62,6 +62,8 @@ The ordinary vcf entrys is stored by there header names, like
 
 etc.
 
+### Genotypes ###
+
 The genotype information is converted to a genotype object and stored in a dictionary
 
     variant['genotypes']
@@ -89,6 +91,8 @@ The genotype class have the following attributes for phrasing common questions:
     - depth_of_coverage INT
     - genotype_quality FLOAT
     - phased BOOL
+
+### Vep info ###
 
 Vep information, if present, is parsed into
 
@@ -141,8 +145,9 @@ and looks like (depending on how vep was run):
                              'SYMBOL_SOURCE': '',
                              'cDNA_position': ''
                          }
-                    'gene_ids':set([SAMD1, NOC2L])
                      }
+
+### Info field ###
 
 INFO field is parsed into a dictionary
 The keys are the names of the info field and values are lists separated on ','.
@@ -170,7 +175,7 @@ and looks like
                    'set': ['variant']}
 
 
-### Print a vcf in it´s original format: ###
+## Print a vcf in it´s original format: ##
 
     my_parser = parser.VCFParser(infile='infile.vcf')
     for line in my_parser.metadata.print_header():
@@ -178,7 +183,7 @@ and looks like
     for variant in my_parser:
 	    print('\t'.join([[variant[head] for head in my_parser.header]))
 
-###Add metadata information:###
+## Add metadata information: ##
 
 Adding INFO field:
 

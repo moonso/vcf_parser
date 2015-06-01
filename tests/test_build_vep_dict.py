@@ -3,7 +3,8 @@ import pytest
 
 def test_build_vep_dict():
     """
-    Test how the build_vep_dict behaves
+    Test how the build_vep_dict behaves with a well formated substitution with
+    only one vep annotation.
     """
     vep_headers = ["Position", "Type", "Allele"]
     annotation = ["1|nonsynonymous|C"]
@@ -21,12 +22,9 @@ def test_build_vep_dict():
                                 "Allele":"C"
                             }]
 
-    assert vep_dict['gene_ids'] == set(['-'])
-
-
 def test_wrong_formated_vep_annotation():
     """
-    Test how the build_vep_dict behaves
+    Test how the build_vep_dict behaves with a wrong formatted vep annotation.
     """
     vep_headers = ["Position", "Type", "Allele"]
     annotation = ["1|nonsynonymous"]
@@ -41,7 +39,8 @@ def test_wrong_formated_vep_annotation():
 
 def test_build_multiple_string():
     """
-    Test how the build_vep_string behaves
+    Test how the build_vep_string behaves with a substitution with multiple vep
+    annotations.
     """
     vep_headers = ["Position", "Type", "Allele"]
     annotation = [
@@ -68,28 +67,11 @@ def test_build_multiple_string():
                                 "Allele":"G"
                             }]
 
-def test_gene_ids():
-    """
-    Test how the build_vep_string behaves
-    """
-    vep_headers = ["Position", "Type", "Allele", "SYMBOL"]
-    annotation = [
-        "1|nonsynonymous|C|ADK",
-        "1|synonymous|G|ADK",
-    ]
-    
-    vep_dict = build_vep_annotation(
-        csq_info=annotation, 
-        reference='A', 
-        alternatives=['C','G'], 
-        vep_columns=vep_headers
-        )
-    
-    assert vep_dict['gene_ids'] == set(["ADK"])
-
 def test_insertion():
     """
-    Test how build vep string behaves with a insertion
+    Test how build vep string behaves with a insertion.
+    
+    Input of alternatives are in the VCF format.
     """
     vep_headers = ["Allele", "Feature_type", "Consequence", "SYMBOL"]
     annotation = [
