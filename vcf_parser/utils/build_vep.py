@@ -61,7 +61,8 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     Args:
         csq_info (list): A list with the raw vep annotations from the vcf line.
         reference (str): A string that represents the vcf reference
-        alternatives (list): A list of strings that represents the vcf alternatives
+        alternatives (list): A list of strings that represents the vcf formated
+                             alternatives
         vep_columns (list): A list of strings that represents the vep comluns
                             defined in the vcf header.
     
@@ -74,7 +75,7 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     """
     logger = getLogger(__name__)
 
-    vep_dict = {'gene_ids' : set([])}
+    vep_dict = {}
 
     # If we have several alternatives we need to check what types of 
     # alternatives we have
