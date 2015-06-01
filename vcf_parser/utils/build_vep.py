@@ -61,7 +61,8 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     Args:
         csq_info (list): A list with the raw vep annotations from the vcf line.
         reference (str): A string that represents the vcf reference
-        alternatives (list): A list of strings that represents the vcf alternatives
+        alternatives (list): A list of strings that represents the vcf formated
+                             alternatives
         vep_columns (list): A list of strings that represents the vep comluns
                             defined in the vcf header.
     
@@ -74,7 +75,9 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
     """
     logger = getLogger(__name__)
 
-    vep_dict = {'gene_ids' : set([])}
+    # The keys in the vep dict are the vcf formatted alternatives, values are the
+    # dictionaries with vep annotations
+    vep_dict = {}
 
     # If we have several alternatives we need to check what types of 
     # alternatives we have
@@ -106,7 +109,7 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
         
         if len(splitted_vep) != len(vep_columns):
             raise SyntaxError("Csq info for variant does not match csq info in "\
-        "header. {0}, {1}".format(
+                            "header. {0}, {1}".format(
             '|'.join(splitted_vep), '|'.join(vep_columns)))
         
         # Build the vep dict:
@@ -115,8 +118,11 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
         # If no allele is found we can not determine what allele
         if vep_info.get('Allele', None):
             vep_allele = vep_info['Allele']
-            vcf_allele = vep_to_vcf[vep_allele]
-
+            try:
+                vcf_allele = vep_to_vcf[vep_allele]
+            except KeyError as e:
+                vcf_allele = vep_allele
+    
             if vcf_allele in vep_dict:
                 vep_dict[vcf_allele].append(vep_info)
             else:
@@ -125,7 +131,5 @@ def build_vep_annotation(csq_info, reference, alternatives, vep_columns):
             logger.warning("No allele found in vep annotation! Skipping annotation")
             
 
-        # Save the gene annotations for this variant:
-        vep_dict['gene_ids'].add(vep_info.get('SYMBOL','-'))
 
     return vep_dict
