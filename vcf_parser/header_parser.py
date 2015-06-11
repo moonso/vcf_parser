@@ -37,13 +37,17 @@ class HeaderParser(object):
         self.other_lines=[]
         self.other_dict=OrderedDict()
         
-        self.header=[]
+        self.header=['CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO']
         self.header_keys={'info' : ['ID', 'Number', 'Type', 'Description'], 
                             'form' : ['ID', 'Number', 'Type', 'Description'], 
                             'filt' : ['ID', 'Description'],
                             'alt' : ['ID', 'Description'],
                             'contig' : ['ID', 'length']}
         self.fileformat = None
+        self.filedate = None
+        self.reference = None
+        self.phasing = None
+        self.source = None
         self.line_counter = 0
         self.individuals = []
         self.vep_columns = []
@@ -182,6 +186,9 @@ class HeaderParser(object):
         """Returns a list with the header lines if proper format"""
         lines_to_print = []
         lines_to_print.append('##fileformat='+self.fileformat)
+        if self.filedate:
+            lines_to_print.append('##fileformat='+self.fileformat)
+            
         for filt in self.filter_dict:
             lines_to_print.append(self.filter_dict[filt])
         for form in self.format_dict:
@@ -197,6 +204,37 @@ class HeaderParser(object):
         lines_to_print.append('#'+ '\t'.join(self.header))
         return lines_to_print
     
+
+    def add_fileformat(self, fileformat):
+        """
+        Add fileformat line to the header.
+        
+        Arguments:
+            fileformat (str): The id of the info line
+        
+        """
+        self.fileformat = fileformat
+        self.logger.info("Adding fileformat to vcf: {0}".format(fileformat))
+        return
+
+    def add_meta_line(self, key, value):
+        """
+        Adds an arbitrary metadata line to the header.
+        
+        This must be a key value pair
+        
+        Arguments:
+            key (str): The key of the metadata line
+            value (str): The value of the metadata line
+        
+        """
+        meta_line = '##{0}={1}'.format(
+            key, value
+        )
+        self.logger.info("Adding meta line to vcf: {0}".format(meta_line))
+        self.parse_meta_data(meta_line)
+        return
+
     def add_info(self, info_id, number, entry_type, description):
         """
         Add an info line to the header.
@@ -211,18 +249,90 @@ class HeaderParser(object):
         info_line = '##INFO=<ID={0},Number={1},Type={2},Description="{3}">'.format(
             info_id, number, entry_type, description
         )
+        self.logger.info("Adding info line to vcf: {0}".format(info_line))
         self.parse_meta_data(info_line)
         return
 
-    def add_fileformat(self, fileformat):
+    def add_filter(self, filter_id, description):
         """
-        Add fileformat line to the header.
+        Add a filter line to the header.
         
         Arguments:
-            fileformat (str): The id of the info line
+            filter_id (str): The id of the filter line
+            description (str): A description of the info line
         
         """
-        self.fileformat = fileformat
+        filter_line = '##FILTER=<ID={0},Description="{1}">'.format(
+            filter_id, description
+        )
+        self.logger.info("Adding filter line to vcf: {0}".format(filter_line))
+        self.parse_meta_data(filter_line)
+        return
+
+    def add_format(self, format_id, number, entry_type, description):
+        """
+        Add a format line to the header.
+        
+        Arguments:
+            format_id (str): The id of the format line
+            number (str): Integer or any of [A,R,G,.]
+            entry_type (str): Any of [Integer,Float,Flag,Character,String]
+            description (str): A description of the info line
+        
+        """
+        format_line = '##FORMAT=<ID={0},Number={1},Type={2},Description="{3}">'.format(
+            format_id, number, entry_type, description
+        )
+        self.logger.info("Adding format line to vcf: {0}".format(format_line))
+        self.parse_meta_data(format_line)
+        return
+
+    def add_alt(self, alt_id, description):
+        """
+        Add a alternative allele format field line to the header.
+        
+        Arguments:
+            alt_id (str): The id of the alternative line
+            description (str): A description of the info line
+        
+        """
+        alt_line = '##ALT=<ID={0},Description="{1}">'.format(
+            alt_id, description
+        )
+        self.logger.info("Adding alternative allele line to vcf: {0}".format(alt_line))
+        self.parse_meta_data(alt_line)
+        return
+
+    def add_contig(self, contig_id, length):
+        """
+        Add a contig line to the header.
+        
+        Arguments:
+            contig_id (str): The id of the alternative line
+            length (str): A description of the info line
+        
+        """
+        contig_line = '##contig=<ID={0},length={1}>'.format(
+            contig_id, length
+        )
+        self.logger.info("Adding contig line to vcf: {0}".format(contig_line))
+        self.parse_meta_data(contig_line)
+        return
+
+    def add_contig(self, contig_id, length):
+        """
+        Add a contig line to the header.
+        
+        Arguments:
+            contig_id (str): The id of the alternative line
+            length (str): A description of the info line
+        
+        """
+        contig_line = '##contig=<ID={0},length={1}>'.format(
+            contig_id, length
+        )
+        self.logger.info("Adding contig line to vcf: {0}".format(contig_line))
+        self.parse_meta_data(contig_line)
         return
 
     def add_version_tracking(self, info_id, version, date, command_line=''):

@@ -183,11 +183,51 @@ and looks like
     for variant in my_parser:
 	    print('\t'.join([[variant[head] for head in my_parser.header]))
 
-## Add metadata information: ##
+## Build a vcf file from scratch ##
 
-Adding INFO field:
+One can use vcf_parser to build vcf files from scratch.
+A vcf file must allways have the "fileformat" header, so start by initializing a vcf parser with the name of the fileformat like
 
-        my_parser.metadata.add_info('my_new_id', <number>, <type>, <description>)
+```
+from vcf_parser import VCFParser
+
+> my_vcf = VCFParser(fileformat='VCFv4.2')
+
+```
+
+### Add metadata information: ###
+
+**Adding INFO field:** 
+
+        my_parser.add_info('my_new_id', <number>, <type>, <description>)
 
 Where 'number', 'type' and 'description' follows the [VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41) specification.  
+
+**Add a filter:**  
+
+        my_parser.add_filter('my_filter', <description>)
+
+
+**Add a arbitrary metadata line:**  
+
+        my_parser.add_filter(key='my_data_line', value="The description")
+
+example:
+
+```
+from vcf_parser import VCFParser
+
+> my_vcf = VCFParser(fileformat='VCFv4.2')
+> my_vcf.metadata.add_filedate(filedate='20150607')
+> my_vcf.metadata.add_info(info_id='MQ', number='1', entry_type='Float', description="RMS Mapping Quality")
+> my_vcf.metadata.add_filter(filter_id="MY_FILTER", description="The filter description")
+> my_vcf.metadata.add_format(format_id="DP", number='1', entry_type='Integer', description="The read depth")
+> my_vcf.metadata.add_alt(alt_id="MY_ALTERNATIVE", description="The alternative description")
+> my_vcf.metadata.add_meta_line_(key="filedate", value="20150607")
+
+
+
+```
+
+
 

@@ -154,31 +154,115 @@ def test_build_vcf():
     """
     Test how it works to build a vcf by adding metadata and variants to the parser
     """
-    parser = VCFParser()
+    parser = VCFParser(fileformat="VCFv4.1")
     variants = []
-    parser.metadata.add_fileformat("VCFv4.1")
     assert parser.metadata.fileformat == "VCFv4.1"
+
+def test_add_filedate():
+    """
+    Test to add afiledate to the vcf
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
+    variants = []
+    parser.metadata.add_meta_line(key='filedate', value='20150607')
+    assert 'filedate' in parser.metadata.other_dict
+
+
+def test_add_info():
+    """
+    Test how it works to build a vcf by adding metadata and variants to the parser
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
     
     parser.metadata.add_info(
         info_id='MQ', number='1', entry_type='Float', description="RMS Mapping Quality")
     
     assert 'MQ' in parser.metadata.extra_info
+    assert 'MQ' in parser.metadata.info_dict
+
+def test_add_filter():
+    """
+    Test how it works to build a vcf by adding metadata and variants to the parser
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
     
-    # No header line added yet
-    with pytest.raises(SyntaxError):
-        parser.add_variant(chrom='1', pos='11900', rs_id='.', ref='A', 
-                        alt='T', qual='100', filt='PASS', info="MQ=1")
+    parser.metadata.add_filter(
+        filter_id="MY_FILTER", description="The filter description")
+    
+    assert 'MY_FILTER' in parser.metadata.filter_dict
+
+def test_add_format():
+    """
+    Test how it works to build a vcf by adding metadata and variants to the parser
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
+    
+    parser.metadata.add_format(
+        format_id="DP", number='1', entry_type='Integer', description="The read depth")
+    
+    assert 'DP' in parser.metadata.format_dict
+
+def test_add_alt():
+    """
+    Test how it works to build a vcf by adding metadata and variants to the parser
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
+    
+    parser.metadata.add_alt(
+        alt_id="MY_ALTERNATIVE", description="The alternative description")
+    
+    assert 'MY_ALTERNATIVE' in parser.metadata.alt_dict
+
+def test_add_contig():
+    """
+    Test how it works to build a vcf by adding metadata and variants to the parser
+    """
+    parser = VCFParser(fileformat="VCFv4.1")
+    
+    parser.metadata.add_contig(
+        contig_id="1", length="249250621")
+    
+    assert '1' in parser.metadata.contig_dict
+
+def test_add_variant():
+    """
+    Test to add a variant to a vcf
+    """
+
+    parser = VCFParser(fileformat="VCFv4.1")
+    
+    parser.metadata.add_info(
+        info_id='MQ', number='1', entry_type='Float', description="RMS Mapping Quality")
+    
+    parser.add_variant(chrom='1', pos='11900', rs_id='.', ref='A',
+                    alt='T', qual='100', filt='PASS', info="MQ=1")
+    
+    variant = parser.variants[0]
+    
+    assert variant['CHROM'] == '1'
+    assert variant['POS'] == '11900'
+
+def test_add_variant_with_genotypes():
+    """
+    Test to add a variant to a vcf
+    """
+
+    parser = VCFParser(fileformat="VCFv4.1")
+    
+    parser.metadata.add_info(
+        info_id='MQ', number='1', entry_type='Float', description="RMS Mapping Quality")
     
     header_line = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t'\
         'father\tmother\tproband'
+    
     parser.metadata.parse_header_line(header_line)
-    parser.add_variant(chrom='1', pos='11900', rs_id='.', ref='A', 
+
+    parser.add_variant(chrom='1', pos='11900', rs_id='.', ref='A',
                         alt='T', qual='100', filt='PASS', info="MQ=1",
                         form="GT:GQ", genotypes=["0/1:60", "0/1:60", "1/1:60"])
-    for variant in parser:
-        variants.append(variant)
-    
-    first_variant = variants[0]
-    
-    assert first_variant['POS'] == '11900'
+
+    variant = parser.variants[0]
+
+    assert variant['POS'] == '11900'
+    assert variant['mother'] == '0/1:60'
 
