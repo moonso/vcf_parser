@@ -87,7 +87,7 @@ from vcf_parser.utils import (format_variant, split_variants)
 class VCFParser(object):
     """docstring for VCFParser"""
     def __init__(self, infile=None, fsock=None, split_variants=False, 
-                skip_info_check=False, allele_symbol='0'):
+                skip_info_check=False, allele_symbol='0', fileformat = None):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
@@ -97,6 +97,7 @@ class VCFParser(object):
         self.fsock = fsock
         self.split_variants = split_variants
         self.logger.info("Split variants = {0}".format(self.split_variants))
+        self.fileformat = fileformat
         
         self.skip_info_check = skip_info_check
         self.logger.info("Skip info check = {0}".format(self.skip_info_check))
@@ -159,6 +160,11 @@ class VCFParser(object):
             ))
             self.header = self.metadata.header
             self.vep_header = self.metadata.vep_columns
+        else:
+            if not self.fileformat:
+                raise IOError("Please initialize with a fileformat.")
+            else:
+                self.metadata.fileformat = self.fileformat
     
     def add_variant(self, chrom, pos, rs_id, ref, alt, qual, filt, info, form=None, genotypes=[]):
         """
@@ -186,9 +192,7 @@ class VCFParser(object):
                                                     header_parser=self.metadata, 
                                                     allele_symbol=self.allele_symbol):
                 self.variants.append(splitted_variant)
-        
-        
-        
+    
     def __iter__(self):
         
         if not self.metadata.fileformat:
