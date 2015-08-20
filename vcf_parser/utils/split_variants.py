@@ -58,18 +58,19 @@ def split_variants(variant_dict, header_parser, allele_symbol='0'):
             variant['FORMAT'] = gt_format
 
         for info in variant_dict['info_dict']:
-            if info:
+            if info and info != '.':
                 # Check if the info field have one entry per allele:
                 number_of_values = header_parser.extra_info[info]['Number']
                 
                 if info == 'CSQ':
-                    try:
-                        vep_dict[alternative] = variant_dict['vep_info'][alternative]
+                    vep_dict[alternative] = variant_dict['vep_info'][alternative]
+                    if vep_dict[alternative]:
                         info_dict['CSQ'] = [
-                            build_vep_string(variant_dict['vep_info'][alternative])
+                            build_vep_string(
+                                vep_dict[alternative], 
+                                header_parser.vep_columns
+                            )
                         ]
-                    except KeyError:
-                        pass
                 # If there is one value per allele we need to split it in
                 # the proper way
                 elif number_of_values == 'A':
@@ -85,11 +86,12 @@ def split_variants(variant_dict, header_parser, allele_symbol='0'):
                     new_info = [reference_value]
                     try:
                         # When we split the alleles we only want to annotate with the correct number
-                        new_info.append(variant_dict['info_dict'][info][alternative_number + 1])
+                        allele_value = variant_dict['info_dict'][info][alternative_number + 1]
+                        new_info.append(allele_value)
                         info_dict[info] = new_info
                     except IndexError:
                         # If annotation is missing we keep the original annotation
-                        pass
+                        info_dict[info] = variant_dict['info_dict'][info]
                     
                 else:
                     info_dict[info] = variant_dict['info_dict'][info]
@@ -117,5 +119,4 @@ def split_variants(variant_dict, header_parser, allele_symbol='0'):
                                     variant['POS'],
                                     variant['REF'],
                                     alternative])
-        
         yield variant

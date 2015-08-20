@@ -1,3 +1,4 @@
+import pytest
 from vcf_parser.utils import split_variants, format_variant
 from vcf_parser import HeaderParser
 
@@ -18,6 +19,8 @@ def get_header(header_lines = None):
             '62.5|67.5|72.5|77.5|82.5|87.5|92.5|97.5">',
             '##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for'\
             ' the ref and alt alleles in the order listed">',
+            '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence type as'\
+            ' predicted by VEP. Format: Allele|Gene|Feature">'
             '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">',
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
             '##FORMAT=<ID=GQ,Number=1,Type=String,Description="GenotypeQuality">'
@@ -107,4 +110,157 @@ def test_split_minimal():
         splitted_variants.append(variant)
     
     assert len(splitted_variants) == 2
+
+def test_csq_split():
+    """
+    Test works when splitting CSQ fields
+    """
     
+    header_parser = get_header()
+    
+    variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tCSQ=T|148398|NM_152486.2,"\
+    "C|148398|NM_152486.2\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
+    "\t1/2:60:0,7,8:16"
+    
+    variant = format_variant(variant_line, header_parser)
+    
+    splitted_variants = []
+    
+    for variant in split_variants(variant, header_parser):
+        splitted_variants.append(variant)
+    
+    assert len(splitted_variants) == 2
+     
+    first_variant = splitted_variants[0]
+    second_variant = splitted_variants[1]
+    
+    assert first_variant['info_dict']['CSQ'] == ['T|148398|NM_152486.2']
+    assert second_variant['info_dict']['CSQ'] == ['C|148398|NM_152486.2']
+    
+    assert list(first_variant['vep_info'].keys()) == ['T']
+    assert list(second_variant['vep_info'].keys()) == ['C']
+    
+    assert first_variant['vep_info']['T'] == [{
+        'Allele':'T',
+        'Gene':'148398',
+        'Feature':'NM_152486.2'
+    }]
+
+def test_csq_split_missing_allele():
+    """
+    Test works when splitting CSQ fields where one allele is missing
+    """
+    
+    header_parser = get_header()
+    
+    variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tCSQ=T|148398|NM_152486.2"\
+    "\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
+    "\t1/2:60:0,7,8:16"
+    
+    variant = format_variant(variant_line, header_parser)
+    
+    splitted_variants = []
+    
+    for variant in split_variants(variant, header_parser):
+        splitted_variants.append(variant)
+    
+    assert len(splitted_variants) == 2
+     
+    first_variant = splitted_variants[0]
+    second_variant = splitted_variants[1]
+    
+    assert first_variant['info_dict']['CSQ'] == ['T|148398|NM_152486.2']
+    with pytest.raises(KeyError):
+        assert second_variant['info_dict']['CSQ'] == ['']
+    
+    assert list(first_variant['vep_info'].keys()) == ['T']
+    
+    assert list(second_variant['vep_info'].keys()) == ['C']
+    
+    assert second_variant['vep_info']['C'] == []
+    
+def test_wrong_number_of_A_entrys():
+    """
+    Test how split genotypes when wrong number of entrys
+    """
+    
+    header_parser = get_header()
+    
+    # CNT should have two entrys since Number=A
+    variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tMQ=1;CNT=5;"\
+    "DP_HIST=12,43,22\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
+    "\t1/2:60:0,7,8:16"
+    #But then we need to skip the info check
+    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    
+    splitted_variants = []
+    
+    for variant in split_variants(variant, header_parser):
+        splitted_variants.append(variant)
+    
+    assert len(splitted_variants) == 2
+     
+    first_variant = splitted_variants[0]
+    second_variant = splitted_variants[1]
+    
+    #Vcf-parser should use the first annotation for both alleles
+    assert first_variant['info_dict']['CNT'] == ['5']
+    assert second_variant['info_dict']['CNT'] == ['5']
+
+def test_wrong_number_of_R_entrys():
+    """
+    Test how split genotypes when wrong number of entrys
+    """
+    
+    header_parser = get_header()
+    
+    # CNT should have two entrys since Number=A
+    variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tMQ=1;CNT=5,8;"\
+    "DP_HIST=12,43\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
+    "\t1/2:60:0,7,8:16"
+    #But then we need to skip the info check
+    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    
+    splitted_variants = []
+    
+    for variant in split_variants(variant, header_parser):
+        splitted_variants.append(variant)
+    
+    assert len(splitted_variants) == 2
+     
+    first_variant = splitted_variants[0]
+    second_variant = splitted_variants[1]
+    
+    #Vcf-parser should use the first annotation for both alleles
+    assert first_variant['info_dict']['DP_HIST'] == ['12','43']
+    assert second_variant['info_dict']['DP_HIST'] == ['12','43']
+
+def test_split_no_info():
+    """
+    Test how split genotypes when wrong number of entrys
+    """
+    
+    header_parser = get_header()
+    
+    # CNT should have two entrys since Number=A
+    variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\t."\
+    "\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
+    "\t1/2:60:0,7,8:16"
+    #But then we need to skip the info check
+    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    
+    splitted_variants = []
+    
+    for variant in split_variants(variant, header_parser):
+        splitted_variants.append(variant)
+    
+    assert len(splitted_variants) == 2
+     
+    first_variant = splitted_variants[0]
+    second_variant = splitted_variants[1]
+    
+    assert first_variant['info_dict'] == {'.':[]}
+    assert second_variant['info_dict'] == {'.':[]}
+
+    assert first_variant['INFO'] == '.'
+    assert second_variant['INFO'] == '.'

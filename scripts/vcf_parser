@@ -57,21 +57,22 @@ def print_version(ctx, param, value):
                     type=click.Path(exists=False),
                     help='Path to a outfile.'
 )
-@click.option("--allele_symbol",
+@click.option('-a',"--allele_symbol",
                 default='0',
                 help="The symbol that should be used when representing "\
-                "unobserved alleles. Default is '0'")
+                "unobserved alleles. Default is '0'"
+)
 @click.option('-v', '--verbose',
                 is_flag=True,
                 help='Increase output verbosity.'
 )
+@click.option('-i', '--skip_info_check', 
+                is_flag=True,
+                help='Skip to check if info fields are correct for all variants.'
+)
 @click.option('--silent', 
                 is_flag=True,
                 help='Do not print vcf data.'
-)
-@click.option('--skip_info_check', 
-                is_flag=True,
-                help='Skip to check if info fields are correct for all variants.'
 )
 @click.option('--version',
                 is_flag=True,
