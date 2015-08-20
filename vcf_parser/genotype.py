@@ -120,10 +120,3 @@ class Genotype(object):
         """Specifies what will be printed when printing the object."""
         return self.allele_1+'/'+self.allele_2
 
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
-
