@@ -65,3 +65,35 @@ def test_other_gt_delimiter():
     assert second_genotype == ".|1:30"
     assert third_genotype == ".|.:30"
     
+def test_split_partial_alternative_gt_call():
+    """
+    Test how split_genotype behaves when only ref allele is called
+    """
+    
+    genotype = "2|.:30"
+    gt_format = "GT:DP"
+    
+    first_genotype = split_genotype(genotype, gt_format, 0, '.')
+    second_genotype = split_genotype(genotype, gt_format, 1, '.')
+    third_genotype = split_genotype(genotype, gt_format, 2, '.')
+    
+    assert first_genotype == "0|.:30"
+    assert second_genotype == "1|.:30"
+    assert third_genotype == "0|.:30"
+    
+def test_split_partial_reference_gt_call():
+    """
+    Test how split_genotype behaves when only ref allele is called
+    """
+    
+    genotype = ".|2:30"
+    gt_format = "GT:DP"
+    
+    first_genotype = split_genotype(genotype, gt_format, 0, '.')
+    second_genotype = split_genotype(genotype, gt_format, 1, '.')
+    third_genotype = split_genotype(genotype, gt_format, 2, '.')
+    
+    assert first_genotype == ".|0:30"
+    assert second_genotype == ".|1:30"
+    assert third_genotype == ".|0:30"
+    
