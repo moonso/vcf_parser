@@ -65,6 +65,31 @@ def test_genotype_0_1():
     assert my_genotype.has_variant
     assert my_genotype.genotyped
 
+def test_bad_dp():
+    """
+    Test what happends when DP is not a float
+    """
+    my_genotype = Genotype(**{'GT':'0/1', 'DP':'A'})
+    assert my_genotype.genotype == '0/1'
+    #If dp is wrong we set it to 0
+    assert my_genotype.depth_of_coverage == 0
+
+def test_bad_gq():
+    """
+    Test what happends when GQ is not a float.
+    """
+    my_genotype = Genotype(**{'GT':'0/1', 'GQ':'A'})
+    assert my_genotype.genotype == '0/1'
+    #If dp is wrong we set it to 0
+    assert my_genotype.genotype_quality == 0
+
+def test_phred_likelihoods():
+    """
+    A normal heterozygote call, has_variant and heterozygote is true.
+    """
+    my_genotype = Genotype(**{'GT':'0/1', 'PL':'60,70,80'})
+    assert my_genotype.phred_likelihoods == [60,70,80]
+
 def test_genotype_1_2():
     """
     A normal heterozygote call, has_variant and heterozygote is true.

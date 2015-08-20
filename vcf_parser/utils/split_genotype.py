@@ -17,6 +17,7 @@ def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0')
         new_genotype (str): A string that represents the new genotype
     """
     logger = getLogger(__name__)
+    
     logger.info("Allele symbol {0}".format(allele_symbol))
 
     splitted_genotype = genotype.split(':')
