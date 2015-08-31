@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from logging import getLogger
 
 def build_models_dict(annotated_models):
