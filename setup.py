@@ -24,7 +24,8 @@ setup(name='vcf_parser',
     ],
     packages = [
         'vcf_parser',
-        'vcf_parser.utils'
+        'vcf_parser.utils',
+        'vcf_parser.cli',
     ],
     keywords = [
         'parser', 
@@ -33,7 +34,7 @@ setup(name='vcf_parser',
     ],
     entry_points = {
         'console_scripts': [
-            'vcf_parser = vcf_parser.cli.vcf_parser:cli'
+            'vcf_parser = vcf_parser.cli.command_line:cli'
         ]
     },
     classifiers = [
