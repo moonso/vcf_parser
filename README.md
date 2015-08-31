@@ -30,7 +30,7 @@ If used within a python environment:
 
 ```python3
 >from vcf_parser import VCFParser
->my_parser = VCFParser(infile='infile.vcf', split_variants=True)
+>my_parser = VCFParser(infile='infile.vcf', split_variants=True, check_info=True)
 >for variant in my_parser:
     print(variant)
 ```

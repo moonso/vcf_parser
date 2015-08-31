@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from logging import getLogger
 
 def build_vep_string(vep_info, vep_columns):

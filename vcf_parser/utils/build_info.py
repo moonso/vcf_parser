@@ -1,6 +1,5 @@
-from __future__ import unicode_literals
-
 import sys
+import logging
 
 if sys.version_info < (2, 7):
     from ordereddict import OrderedDict
@@ -47,7 +46,8 @@ def build_info_dict(vcf_info):
         info_dict (OrderedDict): A ordered dictionary with the vcf info keys as 
                                  keys and lists of values as values
     """
-    
+    logger = logging.getLogger(__name__)
+    logger.debug("Building info dict")
     info_dict = OrderedDict()
     
     for info in vcf_info.split(';'):

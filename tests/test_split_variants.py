@@ -48,7 +48,12 @@ def test_simple_split():
     "DP_HIST=12,43,22\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
     
-    variant = format_variant(variant_line, header_parser)
+    variant =         variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+
     
     splitted_variants = []
     
@@ -102,7 +107,11 @@ def test_split_minimal():
     
     variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tMQ=1"
     
-    variant = format_variant(variant_line, header_parser)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=True
+    )
     
     splitted_variants = []
     
@@ -122,7 +131,11 @@ def test_csq_split():
     "C|148398|NM_152486.2\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
     
-    variant = format_variant(variant_line, header_parser)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=True
+    )
     
     splitted_variants = []
     
@@ -157,7 +170,11 @@ def test_csq_split_missing_allele():
     "\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
     
-    variant = format_variant(variant_line, header_parser)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=True
+    )
     
     splitted_variants = []
     
@@ -190,8 +207,12 @@ def test_wrong_number_of_A_entrys():
     variant_line = "3\t947379\t.\tA\tT,C\t100\tPASS\tMQ=1;CNT=5;"\
     "DP_HIST=12,43,22\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
-    #But then we need to skip the info check
-    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=False
+    )
     
     splitted_variants = []
     
@@ -219,7 +240,11 @@ def test_wrong_number_of_R_entrys():
     "DP_HIST=12,43\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
     #But then we need to skip the info check
-    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=False
+    )
     
     splitted_variants = []
     
@@ -247,7 +272,11 @@ def test_split_no_info():
     "\tGT:GQ:AD:DP\t1/1:60:0,7,0:12\t0/2:60:7,0,10:17"\
     "\t1/2:60:0,7,8:16"
     #But then we need to skip the info check
-    variant = format_variant(variant_line, header_parser, skip_info_check=True)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=False
+    )
     
     splitted_variants = []
     
