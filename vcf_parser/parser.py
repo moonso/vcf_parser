@@ -64,7 +64,7 @@ Created by Måns Magnusson on 2013-01-17.
 Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import sys
 import os
@@ -87,11 +87,12 @@ from vcf_parser.utils import (format_variant, split_variants)
 class VCFParser(object):
     """docstring for VCFParser"""
     def __init__(self, infile=None, fsock=None, split_variants=False, 
-                skip_info_check=False, allele_symbol='0', fileformat = None):
+                check_info=False, allele_symbol='0', fileformat = None):
         super(VCFParser, self).__init__()
         self.logger = logging.getLogger(__name__)
         
         self.vcf = None
+        self.logger.debug("Set self.vcf to:{0}".format(self.vcf))
         self.beginning = True
         self.infile = infile
         self.fsock = fsock
@@ -99,8 +100,8 @@ class VCFParser(object):
         self.logger.info("Split variants = {0}".format(self.split_variants))
         self.fileformat = fileformat
         
-        self.skip_info_check = skip_info_check
-        self.logger.info("Skip info check = {0}".format(self.skip_info_check))
+        self.check_info = check_info
+        self.logger.info("check info = {0}".format(self.check_info))
 
         self.allele_symbol = allele_symbol
         self.logger.info("Allele symbol = {0}".format(self.allele_symbol))
@@ -142,11 +143,13 @@ class VCFParser(object):
             self.logger.debug("Reading first line.")
             self.next_line = self.vcf.readline().rstrip()
             self.current_line = self.next_line
+           
             # First line is allways a metadata line
             if not self.next_line.startswith('#'):
                 raise IOError("VCF files allways have to start with a metadata line.")
             self.metadata.parse_meta_data(self.next_line)
             
+            # Parse the metadata lines
             while self.next_line.startswith('#'):
                 if self.next_line.startswith('##'):
                     self.metadata.parse_meta_data(self.next_line)
@@ -160,6 +163,7 @@ class VCFParser(object):
             ))
             self.header = self.metadata.header
             self.vep_header = self.metadata.vep_columns
+        
         else:
             if not self.fileformat:
                 raise IOError("Please initialize with a fileformat.")
@@ -180,7 +184,11 @@ class VCFParser(object):
             variant_info.append(individual)
         
         variant_line = '\t'.join(variant_info)
-        variant = format_variant(variant_line, self.metadata, self.skip_info_check)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser = self.metadata, 
+            check_info = self.check_info
+        )
         
         if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
             self.variants.append(variant)
@@ -200,9 +208,14 @@ class VCFParser(object):
         
         if self.vcf:
             
+            # We need to treat the first case as an exception
             if self.beginning:
                 variants = []
-                first_variant = format_variant(self.next_line, self.metadata, self.skip_info_check)
+                first_variant = format_variant(
+                    line = self.next_line, 
+                    header_parser = self.metadata, 
+                    check_info = self.check_info
+                )
                 
                 if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
                     variants.append(first_variant)
@@ -212,11 +225,13 @@ class VCFParser(object):
                                                             header_parser=self.metadata, 
                                                             allele_symbol=self.allele_symbol):
                         variants.append(splitted_variant)
+
                 
                 for variant in variants:
                     yield variant
                 
-                self.beginning = False                
+                self.beginning = False
+                
             
             for line in self.vcf:
                 line = line.rstrip()
@@ -226,8 +241,11 @@ class VCFParser(object):
                 variants = []
                 
                 if not line.startswith('#') and len(line.split('\t')) >= 8:
-                    variant = format_variant(line, self.metadata, 
-                                self.skip_info_check)
+                    variant = format_variant(
+                        line = line, 
+                        header_parser = self.metadata, 
+                        check_info = self.check_info
+                        )
                     
                     if not (self.split_variants and len(variant['ALT'].split(',')) > 1):
                         variants.append(variant)

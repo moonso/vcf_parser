@@ -1,28 +1,13 @@
-from __future__ import unicode_literals
+from __future__ import absolute_import
 from logging import getLogger
 
 from vcf_parser import Genotype
-from vcf_parser.utils import (build_info_dict, build_vep_annotation, 
+from . import (build_info_dict, build_vep_annotation, check_info_annotation,
 build_compounds_dict, build_rank_score_dict, build_models_dict)
 
-def is_number(s):
-    """
-    Take a string and determin if it is a number
-    
-    Arguments:
-        s (str): A string
-    
-    Returns:
-        bool: True if it is a number, False otherwise
-    """
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
     
 
-def format_variant(line, header_parser, skip_info_check=False):
+def format_variant(line, header_parser, check_info=False):
     """
     Yield the variant in the right format. 
     
@@ -31,11 +16,14 @@ def format_variant(line, header_parser, skip_info_check=False):
     
     Arguments:
         line (str): A string that represents a variant line in the vcf format
+        header_parser (HeaderParser): A HeaderParser object
+        check_info (bool): If the info fields should be checked
     
     Yields:
         variant (dict): A dictionary with the variant information. The number
                         of variants yielded depends on if split variant is used
                         and how many alternatives there are
+    
     """
     logger = getLogger(__name__)
 
@@ -54,7 +42,8 @@ def format_variant(line, header_parser, skip_info_check=False):
         ))
 
     variant = dict(zip(vcf_header, variant_line))
-
+    
+    
     # A dictionary with the vep information
     variant['vep_info'] = {}
     # A dictionary with the genetic models (family ids as keys)
@@ -72,52 +61,26 @@ def format_variant(line, header_parser, skip_info_check=False):
     
     info_dict = build_info_dict(variant.get('INFO', ''))
     
+    #For testing
+    
     # Check that the entry is on the proper format_
-    if not skip_info_check:
+    if check_info:
         for info in info_dict:
             annotation = info_dict[info]
             extra_info = header_parser.extra_info.get(info, None)
+            
             if not extra_info:
-                logger.warning("The INFO field {0} is not specified in vcf"\
+                raise SyntaxError("The INFO field {0} is not specified in vcf"\
                 " header. {1}".format(info, line))
-            else:
-                number = extra_info['Number']
-                if is_number(number):
-                    number_of_entrys = float(number)
-                    if number_of_entrys != 0:
-                        if len(annotation) != number_of_entrys:
-                            raise SyntaxError("Info field {0} has the wrong "\
-                            "number of entrys according to the vcf header."\
-                            "Vcf header line: {1}".format(
-                                '='.join([info, ','.join(annotation)]), 
-                                header_parser.extra_info.get(info, None)
-                            ))
-                elif number == 'A':
-                    if len(annotation) != len(alternatives):
-                        raise SyntaxError("Info field {0} has the wrong "\
-                        "number of entrys according to the vcf header"\
-                        "Vcf header line: {1}".format(
-                            '='.join([info, ','.join(annotation)]),
-                            header_parser.extra_info.get(info, None)
-                        ))
-                elif number == 'R':
-                    if len(annotation) != (len(alternatives) + 1):
-                        raise SyntaxError("Info field {0} has the wrong "\
-                        "number of entrys according to the vcf header".format(
-                            '='.join([info, ','.join(annotation)])
-                        ))
-                elif number == 'G':
-                    if len(annotation) != len(individuals):
-                        raise SyntaxError("Info field {0} has the wrong "\
-                        "number of entrys according to the vcf header".format(
-                            '='.join([info, ','.join(annotation)])
-                        ))
-                        
-                        
-                
-        
+            try:
+                check_info_annotation(annotation, info, extra_info, alternatives, individuals)
+            except SyntaxError as e:
+                logger.critical(e)
+                logger.info("Line:{0}".format(line))
+                raise e
     
     variant['info_dict'] = info_dict
+    
     #################### Some fields require special parsing ###########################
     
     ##### VEP ANNOTATIONS #####

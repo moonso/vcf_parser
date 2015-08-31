@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from logging import getLogger
 
 def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0'):
