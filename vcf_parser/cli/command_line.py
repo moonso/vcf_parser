@@ -19,9 +19,7 @@ from pprint import pprint as pp
 from datetime import datetime
 from codecs import open
 
-import vcf_parser
-
-#__version__, import VCFParser
+from vcf_parser import __version__, VCFParser
 
 
 def print_version(ctx, param, value):
@@ -68,7 +66,7 @@ def print_version(ctx, param, value):
                 is_flag=True,
                 help='Increase output verbosity.'
 )
-@click.option('-i', '--skip_info_check', 
+@click.option('-i', '--check_info', 
                 is_flag=True,
                 help='Skip to check if info fields are correct for all variants.'
 )
@@ -92,7 +90,7 @@ def print_version(ctx, param, value):
                                         'CRITICAL']),
                     help="Set the level of log output."
 )
-def cli(variant_file, vep, split, outfile, verbose, silent, skip_info_check,
+def cli(variant_file, vep, split, outfile, verbose, silent, check_info,
         allele_symbol, logfile, loglevel):
     """
     Tool for parsing vcf files.
@@ -102,55 +100,69 @@ def cli(variant_file, vep, split, outfile, verbose, silent, skip_info_check,
     as single variant calls.
     For more information, please see github.com/moonso/vcf_parser.
     """
-    # from vcf_parser import logger, init_log
-    #
-    # if not loglevel:
-    #     if verbose:
-    #         loglevel = 'INFO'
-    #
-    # init_log(logger, logfile, loglevel)
+    from vcf_parser import logger, init_log
+
+    if not loglevel:
+        if verbose:
+            loglevel = 'INFO'
+
+    init_log(logger, logfile, loglevel)
     nr_of_variants = 0
     start = datetime.now()
     
-    with open(variant_file, 'r', encoding="utf-8") as f:
-        for line in f:
-            if not line.startswith('#'):
-                nr_of_variants += 1
-    
-    # if variant_file == '-':
-    #     logger.info("Start parsing variants from stdin")
-    #     my_parser = VCFParser(fsock=sys.stdin, split_variants=split,
-    #                 skip_info_check=skip_info_check, allele_symbol=allele_symbol)
-    # else:
-    #     logger.info("Start parsing variants from file {0}".format(variant_file))
-    #     my_parser = VCFParser(infile = variant_file,
-    #     split_variants=split, skip_info_check=skip_info_check, allele_symbol=allele_symbol)
-    #
-    # if outfile:
-    #     logger.info("Printing vcf to file {0}".format(outfile))
-    #     with open(outfile, 'w', encoding='utf-8') as f:
-    #         for line in my_parser.metadata.print_header():
-    #             f.write(line+'\n')
-    #         for variant in my_parser:
-    #             f.write('\t'.join([variant[head] for head in my_parser.header])+'\n')
+    # with open(variant_file, 'r', encoding="utf-8") as f:
+    #     for line in f:
+    #         if not line.startswith('#'):
     #             nr_of_variants += 1
-    # else:
-    #     if not silent:
-    #         logger.info("Printing vcf to stdout")
-    #     else:
-    #         logger.info("Skip printing since silent is active")
-    #     for line in my_parser.metadata.print_header():
-    #         if not silent:
-    #             print(line)
-    #     for variant in my_parser:
-    #         if not silent:
-    #             print('\t'.join([variant[head] for head in my_parser.header]))
-    #         nr_of_variants += 1
     
-    # logger.info('Number of variants: {0}'.format(nr_of_variants))
-    # logger.info('Time to parse file: {0}'.format(str(datetime.now() - start)))
-    print('Number of variants: {0}'.format(nr_of_variants))
-    print('Time to parse file: {0}'.format(str(datetime.now() - start)))
+    if variant_file == '-':
+        logger.info("Start parsing variants from stdin")
+        my_parser = VCFParser(
+            fsock=sys.stdin, 
+            split_variants=split,
+            check_info=check_info, 
+            allele_symbol=allele_symbol
+        )
+    else:
+        logger.info("Start parsing variants from file {0}".format(variant_file))
+        my_parser = VCFParser(
+            infile = variant_file,
+            split_variants=split, 
+            check_info=check_info, 
+            allele_symbol=allele_symbol
+        )
+
+    if outfile:
+        f = open(outfile, 'w', encoding='utf-8')
+        logger.info("Printing vcf to file {0}".format(outfile))
+    
+    if not silent:
+        logger.info("Printing vcf to stdout")
+    else:
+        logger.info("Skip printing since silent is active")
+    
+    for line in my_parser.metadata.print_header():
+        if outfile:
+            f.write(line+'\n')
+        else:
+            if not silent:
+                print(line)
+    try:
+        for variant in my_parser:
+            variant_line = '\t'.join([variant[head] for head in my_parser.header])
+            if outfile:
+                f.write(variant_line + '\n')
+            else:
+                if not silent:
+                    print(variant_line)
+            nr_of_variants += 1
+    except SyntaxError as e:
+        print(e)
+
+    logger.info('Number of variants: {0}'.format(nr_of_variants))
+    logger.info('Time to parse file: {0}'.format(str(datetime.now() - start)))
+    # print('Number of variants: {0}'.format(nr_of_variants))
+    # print('Time to parse file: {0}'.format(str(datetime.now() - start)))
     
 
 if __name__ == '__main__':

@@ -52,7 +52,11 @@ def test_simple_variant():
     variant_line = "1\t11900\t.\tA\tT\t100\tPASS\tMQ=1\tGT:GQ\t0/1:60\t"\
                     "0/1:60\t1/1:60"
     
-    variant = format_variant(variant_line, header_parser)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=True
+    )
     info_dict = OrderedDict()
     info_dict['MQ'] = ['1']
     
@@ -82,7 +86,12 @@ def test_malformed_line():
                     "0/1:60\t1/1:60"
     
     with pytest.raises(SyntaxError):
-        format_variant(variant_line, header_parser)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+        
 
 def test_no_genotypes():
     """
@@ -100,7 +109,12 @@ def test_no_genotypes():
     # Missing position
     variant_line = "1\t11900\t.\tA\tT\t100\tPASS\tMQ=1"
     
-    format_variant(variant_line, header_parser)
+    variant = format_variant(
+        line = variant_line, 
+        header_parser=header_parser, 
+        check_info=True
+    )
+    
 
     
 def test_wrong_number_annotation_integer():
@@ -115,7 +129,12 @@ def test_wrong_number_annotation_integer():
                    
     
     with pytest.raises(SyntaxError):
-        format_variant(variant_line, header_parser)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+        
     
 def test_wrong_number_annotation_allele():
     """
@@ -130,7 +149,12 @@ def test_wrong_number_annotation_allele():
     
     
     with pytest.raises(SyntaxError):
-        format_variant(variant_line, header_parser)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+        
 
 def test_wrong_number_annotation_reference():
     """
@@ -145,7 +169,12 @@ def test_wrong_number_annotation_reference():
     
     
     with pytest.raises(SyntaxError):
-        variant = format_variant(variant_line, header_parser)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+        
 
 def test_wrong_number_annotation_genotype():
     """
@@ -160,7 +189,12 @@ def test_wrong_number_annotation_genotype():
     
     
     with pytest.raises(SyntaxError):
-        variant = format_variant(variant_line, header_parser)
+        variant = format_variant(
+            line = variant_line, 
+            header_parser=header_parser, 
+            check_info=True
+        )
+        
     
     
     
