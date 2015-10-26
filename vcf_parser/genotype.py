@@ -96,12 +96,12 @@ class Genotype(object):
         
         allele_depths = AD.split(',')
         
-        if len(allele_depths) > 1:
+        if len(allele_depths) > 1 and allele_depths[0] != '.':
             if allele_depths[0].isdigit():
                 self.ref_depth = int(allele_depths[0])
             if allele_depths[1].isdigit():
                 self.alt_depth = int(allele_depths[1])
-        elif RO and AO:
+        elif RO or AO:
             if RO.isdigit():
                 self.ref_depth = int(RO)
             if AO.isdigit():
