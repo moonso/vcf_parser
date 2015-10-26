@@ -25,6 +25,7 @@ Attributes:
     - depth_of_coverage INT
     - genotype_quality FLOAT
     - phased BOOL
+    - genotype_likeliehoods LIST with INT
 
 If a variant is present, that is if homo_alt or heterozygote is true, then has_variant is True
     
@@ -53,8 +54,10 @@ class Genotype(object):
         DP = kwargs.get('DP', '0')
         GQ = kwargs.get('GQ', '0')
         PL = kwargs.get('PL', None)
+        GL = kwargs.get('GL', None)
         RO = kwargs.get('RO', None)
         AO = kwargs.get('AO', None)
+        
         self.heterozygote = False
         self.allele_depth = False
         self.homo_alt = False
@@ -120,10 +123,15 @@ class Genotype(object):
             pass
         #Check the genotype likelihoods
         self.phred_likelihoods = []
-        
+        gls = None
         if PL:
+            gls = PL
+        elif GL:
+            gls = GL
+        
+        if gls:
             try:
-                self.phred_likelihoods = [int(score) for score in PL.split(',')]
+                self.phred_likelihoods = [int(score) for score in gls.split(',')]
             except ValueError:
                 pass
         

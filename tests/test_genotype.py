@@ -89,6 +89,9 @@ def test_phred_likelihoods():
     """
     my_genotype = Genotype(**{'GT':'0/1', 'PL':'60,70,80'})
     assert my_genotype.phred_likelihoods == [60,70,80]
+    my_genotype = Genotype(**{'GT':'0/1', 'GL':'60,70,80'})
+    assert my_genotype.phred_likelihoods == [60,70,80]
+
 
 def test_genotype_1_2():
     """
@@ -162,3 +165,4 @@ def test_freebayes_ro_ao():
     my_genotype = Genotype(**{'GT':'0/1', 'AO':'15', 'RO':'20'})
     assert my_genotype.ref_depth == 20
     assert my_genotype.alt_depth == 15
+
