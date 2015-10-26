@@ -25,6 +25,7 @@ Attributes:
     - depth_of_coverage INT
     - genotype_quality FLOAT
     - phased BOOL
+    - genotype_likeliehoods LIST with INT
 
 If a variant is present, that is if homo_alt or heterozygote is true, then has_variant is True
     
@@ -53,6 +54,10 @@ class Genotype(object):
         DP = kwargs.get('DP', '0')
         GQ = kwargs.get('GQ', '0')
         PL = kwargs.get('PL', None)
+        GL = kwargs.get('GL', None)
+        RO = kwargs.get('RO', None)
+        AO = kwargs.get('AO', None)
+        
         self.heterozygote = False
         self.allele_depth = False
         self.homo_alt = False
@@ -94,11 +99,16 @@ class Genotype(object):
         
         allele_depths = AD.split(',')
         
-        if len(allele_depths) > 1:
+        if len(allele_depths) > 1 and allele_depths[0] != '.':
             if allele_depths[0].isdigit():
                 self.ref_depth = int(allele_depths[0])
             if allele_depths[1].isdigit():
                 self.alt_depth = int(allele_depths[1])
+        elif RO or AO:
+            if RO.isdigit():
+                self.ref_depth = int(RO)
+            if AO.isdigit():
+                self.alt_depth = int(AO)
         
         self.quality_depth = self.ref_depth + self.alt_depth
         #Check the depth of coverage:
@@ -113,10 +123,15 @@ class Genotype(object):
             pass
         #Check the genotype likelihoods
         self.phred_likelihoods = []
-        
+        gls = None
         if PL:
+            gls = PL
+        elif GL:
+            gls = GL
+        
+        if gls:
             try:
-                self.phred_likelihoods = [int(score) for score in PL.split(',')]
+                self.phred_likelihoods = [int(score) for score in gls.split(',')]
             except ValueError:
                 pass
         
