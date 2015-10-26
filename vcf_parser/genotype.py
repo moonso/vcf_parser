@@ -120,17 +120,14 @@ class Genotype(object):
             pass
         #Check the genotype likelihoods
         self.phred_likelihoods = []
+        
         if PL:
-            self.phred_likelihoods = [int(score) for score in PL.split(',')]
+            try:
+                self.phred_likelihoods = [int(score) for score in PL.split(',')]
+            except ValueError:
+                pass
         
     def __str__(self):
         """Specifies what will be printed when printing the object."""
         return self.allele_1+'/'+self.allele_2
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
 

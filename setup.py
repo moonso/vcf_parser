@@ -12,7 +12,7 @@ except ImportError:
 long_description = 'Tool for parsing Variant Call Format (VCF) files. Works like a lightweight version of PyVCF.'
 
 setup(name='vcf_parser',
-    version='1.2',
+    version='1.5.2',
     description='Parsing vcf files',
     author = 'Mans Magnusson',
     author_email = 'mans.magnusson@scilifelab.se',
@@ -23,16 +23,20 @@ setup(name='vcf_parser',
         'click'
     ],
     packages = [
-        'vcf_parser'
+        'vcf_parser',
+        'vcf_parser.utils',
+        'vcf_parser.cli',
     ],
     keywords = [
         'parser', 
         'vcf', 
         'variants'
     ],
-    scripts = [
-        'scripts/vcf_parser'
-    ],
+    entry_points = {
+        'console_scripts': [
+            'vcf_parser = vcf_parser.cli.command_line:cli'
+        ]
+    },
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
