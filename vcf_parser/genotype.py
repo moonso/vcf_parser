@@ -53,6 +53,8 @@ class Genotype(object):
         DP = kwargs.get('DP', '0')
         GQ = kwargs.get('GQ', '0')
         PL = kwargs.get('PL', None)
+        RO = kwargs.get('RO', None)
+        AO = kwargs.get('AO', None)
         self.heterozygote = False
         self.allele_depth = False
         self.homo_alt = False
@@ -99,6 +101,11 @@ class Genotype(object):
                 self.ref_depth = int(allele_depths[0])
             if allele_depths[1].isdigit():
                 self.alt_depth = int(allele_depths[1])
+        elif RO and AO:
+            if RO.isdigit():
+                self.ref_depth = int(RO)
+            if AO.isdigit():
+                self.alt_depth = int(AO)
         
         self.quality_depth = self.ref_depth + self.alt_depth
         #Check the depth of coverage:
