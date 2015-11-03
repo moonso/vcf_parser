@@ -89,8 +89,8 @@ def test_phred_likelihoods():
     """
     my_genotype = Genotype(**{'GT':'0/1', 'PL':'60,70,80'})
     assert my_genotype.phred_likelihoods == [60,70,80]
-    my_genotype = Genotype(**{'GT':'0/1', 'GL':'60,70,80'})
-    assert my_genotype.phred_likelihoods == [60,70,80]
+    my_genotype = Genotype(**{'GT':'0/1', 'GL':'-3.14,2.78,0'})
+    assert my_genotype.phred_likelihoods == [-3.14,2.78,0]
 
 
 def test_genotype_1_2():

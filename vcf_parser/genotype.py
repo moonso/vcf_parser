@@ -25,12 +25,10 @@ Attributes:
     - depth_of_coverage INT
     - genotype_quality FLOAT
     - phased BOOL
-    - genotype_likeliehoods LIST with INT
 
 If a variant is present, that is if homo_alt or heterozygote is true, then has_variant is True
     
 When dealing with phased data we will see the '|'-delimiter
-
 
 #TODO:
 Should we allow '1/2', '2/2' and so on? This type of call looses it's point when moving from vcf -> bed since bed files only have one kind of variant on each line.
@@ -42,7 +40,6 @@ Copyright (c) 2013 __MyCompanyName__. All rights reserved.
 
 import sys
 import os
-
 
 class Genotype(object):
     """Holds information about a genotype"""
@@ -68,9 +65,11 @@ class Genotype(object):
         self.depth_of_coverage = 0
         self.quality_depth = 0
         self.genotype_quality = 0
+
         #Check phasing
         if '|' in GT:
             self.phased = True
+
         #Check the genotyping:
         #This is the case when only one allele is present(eg. X-chromosome) and presented like '0' or '1':
         if len(GT) < 3: 
@@ -93,6 +92,7 @@ class Genotype(object):
             else:
                 self.heterozygote = True
                 self.has_variant = True
+
         #Check the allele depth:
         self.ref_depth = 0
         self.alt_depth = 0
@@ -121,6 +121,7 @@ class Genotype(object):
             self.genotype_quality = float(GQ)
         except ValueError:
             pass
+
         #Check the genotype likelihoods
         self.phred_likelihoods = []
         gls = None
@@ -128,10 +129,10 @@ class Genotype(object):
             gls = PL
         elif GL:
             gls = GL
-        
+
         if gls:
             try:
-                self.phred_likelihoods = [int(score) for score in gls.split(',')]
+                self.phred_likelihoods = [float(score) for score in gls.split(',')]
             except ValueError:
                 pass
         
