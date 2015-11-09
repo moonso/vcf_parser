@@ -37,7 +37,7 @@ def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0')
             alt_allele = '.'
             try:
                 # Check the ref Allele
-                if gt[0] != '.' and gt[1] != '.':
+                if len(gt) == 2 and gt[0] != '.' and gt[1] != '.':
                     ref_allele = allele_symbol
                     alt_allele = allele_symbol
                     if gt[0] == gt[1]:
@@ -56,7 +56,7 @@ def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0')
                             ref_allele = '1'
                         else:
                             ref_allele = '0'
-                    elif gt[1] != '.':
+                    elif len(gt) == 2 and gt[1] != '.':
                         if int(gt[1]) == alternative_number + 1:
                             alt_allele = '1'
                         else:
@@ -64,10 +64,14 @@ def split_genotype(genotype, gt_format, alternative_number, allele_symbol = '0')
             except (ValueError, KeyError):
                 pass
             
-            if phased:
-                new_genotype.append('|'.join([ref_allele,alt_allele]))
+            if len(gt) == 2:
+                if phased:
+                    new_genotype.append('|'.join([ref_allele,alt_allele]))
+                else:
+                    new_genotype.append('/'.join([ref_allele,alt_allele]))
             else:
-                new_genotype.append('/'.join([ref_allele,alt_allele]))            
+                new_genotype.append(ref_allele)
+        
         elif gt_info == 'AD':
             ad = []
             # The reference depth will allways be the original depth now
