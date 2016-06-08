@@ -66,6 +66,11 @@ class Genotype(object):
         self.quality_depth = 0
         self.genotype_quality = 0
 
+        #Check the allele depth:
+        self.ref_depth = None
+        self.alt_depth = None
+        self.quality_depth = None
+
         #Check phasing
         if '|' in GT:
             self.phased = True
@@ -93,10 +98,6 @@ class Genotype(object):
                 self.heterozygote = True
                 self.has_variant = True
 
-        #Check the allele depth:
-        self.ref_depth = 0
-        self.alt_depth = 0
-        
         allele_depths = AD.split(',')
         
         if len(allele_depths) > 1 and allele_depths[0] != '.':
@@ -110,7 +111,9 @@ class Genotype(object):
             if AO.isdigit():
                 self.alt_depth = int(AO)
         
-        self.quality_depth = self.ref_depth + self.alt_depth
+        if self.ref_depth and self.alt_depth:
+            self.quality_depth = self.ref_depth + self.alt_depth
+            
         #Check the depth of coverage:
         try:
             self.depth_of_coverage = int(DP)
