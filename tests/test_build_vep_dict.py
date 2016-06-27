@@ -215,3 +215,31 @@ def test_multiple_deletions():
          'SYMBOL': 'NOC2L'
           }
       ]
+
+
+def test_equals_sign_in_vep_consequence():
+    """
+    Test that equals signs in vep CSQs (for example "p.=" parses correctly)
+
+    Fix from https://github.com/jamescasbon/PyVCF/issues/181
+    """
+    vep_headers = ["Allele", "Feature_type", "HGVSp", "Consequence", "SYMBOL"]
+    annotation = [
+        "G|Transcript|p.=|downstream_gene_variant|NOC2L",
+        ]
+
+    vep_dict = build_vep_annotation(
+        csq_info=annotation,
+        reference='C',
+        alternatives=['G'],
+        vep_columns=vep_headers
+        )
+
+    assert vep_dict['G'] == [
+        {'Allele': 'G',
+         'Consequence': 'downstream_gene_variant',
+         'Feature_type': 'Transcript',
+         'HGVSp': 'p.=',
+         'SYMBOL': 'NOC2L'
+         }
+      ]
