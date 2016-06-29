@@ -53,7 +53,8 @@ def build_info_dict(vcf_info):
     for info in vcf_info.split(';'):
         info = info.split('=')
         if len(info) > 1:
-            #If the INFO entry is like key=value, we store the value as a list
+            # If the INFO entry is like key=value, we store the value as a list
+            info[1] = '='.join(info[1:])
             info_dict[info[0]] = info[1].split(',')
         else:
             info_dict[info[0]] = []
