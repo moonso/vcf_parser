@@ -54,6 +54,8 @@ class Genotype(object):
         GL = kwargs.get('GL', None)
         RO = kwargs.get('RO', None)
         AO = kwargs.get('AO', None)
+        PR = kwargs.get('PR', None)
+        SR = kwargs.get('SR', None)
         
         self.heterozygote = False
         self.allele_depth = False
@@ -65,6 +67,11 @@ class Genotype(object):
         self.depth_of_coverage = 0
         self.quality_depth = 0
         self.genotype_quality = 0
+
+        #Check the allele depth:
+        self.ref_depth = None
+        self.alt_depth = None
+        self.quality_depth = None
 
         #Check phasing
         if '|' in GT:
@@ -93,10 +100,6 @@ class Genotype(object):
                 self.heterozygote = True
                 self.has_variant = True
 
-        #Check the allele depth:
-        self.ref_depth = 0
-        self.alt_depth = 0
-        
         allele_depths = AD.split(',')
         
         if len(allele_depths) > 1 and allele_depths[0] != '.':
@@ -109,8 +112,31 @@ class Genotype(object):
                 self.ref_depth = int(RO)
             if AO.isdigit():
                 self.alt_depth = int(AO)
+        elif PR or SR:
+            if PR:
+                paired_depth = PR.split(',')
+                self.ref_depth = int(paired_depth[0])
+                self.alt_depth = int(paired_depth[1])
+            if SR:
+                split_depth = SR.split(',')
+                if self.ref_depth:
+                    self.ref_depth += int(split_depth[0])
+                else:
+                    self.ref_depth = int(split_depth[0])
+                if self.alt_depth:
+                    self.alt_depth += int(split_depth[1])
+                else:
+                    self.alt_depth = int(split_depth[1])
         
-        self.quality_depth = self.ref_depth + self.alt_depth
+        #Sum up the quality depth
+        if self.ref_depth:
+            self.quality_depth = self.ref_depth
+        if self.alt_depth:
+            if self.quality_depth:
+                self.quality_depth += self.alt_depth
+            else:
+                self.quality_depth = self.alt_depth
+            
         #Check the depth of coverage:
         try:
             self.depth_of_coverage = int(DP)
