@@ -165,4 +165,27 @@ def test_freebayes_ro_ao():
     my_genotype = Genotype(**{'GT':'0/1', 'AO':'15', 'RO':'20'})
     assert my_genotype.ref_depth == 20
     assert my_genotype.alt_depth == 15
+    assert my_genotype.quality_depth == 35
 
+
+def test_sv_sr_pr():
+    """docstring for test_sv_sr_pr"""
+    my_genotype = Genotype(**{'GT':'0/1','FT':'PASS','GQ':'73','PL':'214,0,70','PR':'1,3','SR':'1,3'})
+    assert my_genotype.ref_depth == 2
+    assert my_genotype.alt_depth == 6
+    assert my_genotype.quality_depth == 8
+
+
+def test_sv_sr_pr_no_reads():
+    """docstring for test_sv_sr_pr"""
+    my_genotype = Genotype(**{'GT':'0/0','FT':'PASS','GQ': '48','PL':'0,0,0','PR':'0,0','SR':'0,0'})
+    assert my_genotype.ref_depth == 0
+    assert my_genotype.alt_depth == 0
+    assert my_genotype.quality_depth == None
+
+def test_sv_sr_pr_no_sr():
+    """docstring for test_sv_sr_pr"""
+    my_genotype = Genotype(**{'GT':'1/1','FT':'PASS','GQ':'73','PL':'214,0,70','PR':'0,4'})
+    assert my_genotype.ref_depth == 0
+    assert my_genotype.alt_depth == 4
+    assert my_genotype.quality_depth == 4
