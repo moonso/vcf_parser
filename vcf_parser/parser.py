@@ -211,28 +211,26 @@ class VCFParser(object):
             # We need to treat the first case as an exception
             if self.beginning:
                 variants = []
+                first_variant = format_variant(
+                    line = self.next_line, 
+                    header_parser = self.metadata, 
+                    check_info = self.check_info
+                )
                 
-                if self.next_line:
-                    first_variant = format_variant(
-                        line = self.next_line, 
-                        header_parser = self.metadata, 
-                        check_info = self.check_info
-                    )
-                    
-                    if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
-                        variants.append(first_variant)
-                    else:
-                        for splitted_variant in split_variants(
-                                                                variant_dict=first_variant, 
-                                                                header_parser=self.metadata, 
-                                                                allele_symbol=self.allele_symbol):
-                            variants.append(splitted_variant)
-                    
-                    
-                    for variant in variants:
-                        yield variant
-                    
-                    self.beginning = False
+                if not (self.split_variants and len(first_variant['ALT'].split(',')) > 1):
+                    variants.append(first_variant)
+                else:
+                    for splitted_variant in split_variants(
+                                                            variant_dict=first_variant, 
+                                                            header_parser=self.metadata, 
+                                                            allele_symbol=self.allele_symbol):
+                        variants.append(splitted_variant)
+
+                
+                for variant in variants:
+                    yield variant
+                
+                self.beginning = False
                 
             
             for line in self.vcf:
