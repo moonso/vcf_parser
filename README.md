@@ -96,7 +96,7 @@ The genotype class have the following attributes for phrasing common questions:
 
 Vep information, if present, is parsed into
 
-    variant['vep_dict']
+    variant['vep_info']
 
 and looks like (depending on how vep was run):
 
